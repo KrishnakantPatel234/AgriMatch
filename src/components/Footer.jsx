@@ -1,7 +1,10 @@
 // components/Footer.js
 import React from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 const Footer = () => {
+  const { t } = useLanguage();
+
   return (
     <footer className="bg-gray-800 text-white">
       <div className="container mx-auto px-4 py-12">
@@ -13,7 +16,7 @@ const Footer = () => {
               <span className="ml-2 text-xl font-bold">AgriMatch</span>
             </div>
             <p className="text-gray-300 mb-4 leading-relaxed">
-              Connecting farmers with buyers, transporters, and storage providers to create a seamless agricultural ecosystem.
+              {t('footer.description')}
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-300 hover:text-green-400 transition duration-300">
@@ -30,21 +33,21 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('footer.quickLinks')}</h3>
             <ul className="space-y-2">
-              <li><a href="#farmers" className="text-gray-300 hover:text-green-400 transition duration-300">For Farmers</a></li>
-              <li><a href="#buyers" className="text-gray-300 hover:text-green-400 transition duration-300">For Buyers</a></li>
-              <li><a href="#transport" className="text-gray-300 hover:text-green-400 transition duration-300">Transport</a></li>
-              <li><a href="#cold-storage" className="text-gray-300 hover:text-green-400 transition duration-300">Cold Storage</a></li>
+              <li><a href="#farmers" className="text-gray-300 hover:text-green-400 transition duration-300">{t('nav.farmers')}</a></li>
+              <li><a href="#buyers" className="text-gray-300 hover:text-green-400 transition duration-300">{t('nav.buyers')}</a></li>
+              <li><a href="#transport" className="text-gray-300 hover:text-green-400 transition duration-300">{t('nav.transport')}</a></li>
+              <li><a href="#cold-storage" className="text-gray-300 hover:text-green-400 transition duration-300">{t('nav.coldStorage')}</a></li>
             </ul>
           </div>
 
           {/* Support */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Support</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('footer.support')}</h3>
             <ul className="space-y-2">
               <li><a href="#" className="text-gray-300 hover:text-green-400 transition duration-300">Help Center</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-green-400 transition duration-300">Contact Us</a></li>
+              <li><a href="#" className="text-gray-300 hover:text-green-400 transition duration-300">{t('footer.contact')}</a></li>
               <li><a href="#" className="text-gray-300 hover:text-green-400 transition duration-300">Privacy Policy</a></li>
               <li><a href="#" className="text-gray-300 hover:text-green-400 transition duration-300">Terms of Service</a></li>
             </ul>
@@ -52,7 +55,7 @@ const Footer = () => {
 
           {/* Contact Info */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('footer.contact')}</h3>
             <div className="space-y-2 text-gray-300">
               <div className="flex items-center">
                 <span className="mr-2">📧</span>
@@ -64,7 +67,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center">
                 <span className="mr-2">📍</span>
-                <span>Bhopal , Madhya Pradesh, India</span>
+                <span>Hyderabad, Telangana, India</span>
               </div>
             </div>
           </div>
@@ -73,7 +76,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-gray-700 mt-8 pt-8 text-center">
           <p className="text-gray-300">
-            © 2024 AgriMatch. All rights reserved. Empowering farmers, transforming agriculture.
+            © 2024 AgriMatch. {t('footer.rights')}
           </p>
         </div>
       </div>

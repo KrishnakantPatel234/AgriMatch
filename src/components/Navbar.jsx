@@ -1,10 +1,11 @@
 // components/Navbar.js
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [language, setLanguage] = useState('EN');
+  const { language, languages, changeLanguage, t } = useLanguage();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -14,47 +15,72 @@ const Navbar = () => {
     setIsMenuOpen(false);
   };
 
+  const handleLanguageChange = (langCode) => {
+    changeLanguage(langCode);
+    closeMenu();
+  };
+
   return (
-    <nav className="transparent backdrop-blur-md shadow-lg sticky top-0 z-50">
+    <nav className="bg-white shadow-lg sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
-          <div className="flex items-center">
+          <Link to="/" className="flex items-center">
             <span className="text-2xl text-green-600">🌱</span>
-            <Link to='/' className="ml-2 text-xl font-bold text-green-800">AgriMatch</Link>
-            {/* <span className="ml-2 text-xl font-bold text-green-800">AgriMatch</span> */}
-          </div>
+            <span className="ml-2 text-xl font-bold text-green-800">AgriMatch</span>
+          </Link>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#farmers" className="text-gray-700 hover:text-green-600 font-medium transition duration-300">Farmers</a>
-            <a href="#transport" className="text-gray-700 hover:text-green-600 font-medium transition duration-300">Transport</a>
-            <a href="#cold-storage" className="text-gray-700 hover:text-green-600 font-medium transition duration-300">Cold Storage</a>
-            <a href="#buyers" className="text-gray-700 hover:text-green-600 font-medium transition duration-300">Buyers</a>
+            <a href="#farmers" className="text-gray-700 hover:text-green-600 font-medium transition duration-300">
+              {t('nav.farmers')}
+            </a>
+            <a href="#transport" className="text-gray-700 hover:text-green-600 font-medium transition duration-300">
+              {t('nav.transport')}
+            </a>
+            <a href="#cold-storage" className="text-gray-700 hover:text-green-600 font-medium transition duration-300">
+              {t('nav.coldStorage')}
+            </a>
+            <a href="#buyers" className="text-gray-700 hover:text-green-600 font-medium transition duration-300">
+              {t('nav.buyers')}
+            </a>
             
             {/* Language Selector */}
-            <select 
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              <option value="EN">English</option>
-              <option value="HI">Hindi</option>
-              <option value="TE">Telugu</option>
-              <option value="TA">Tamil</option>
-            </select>
+            <div className="relative group">
+              <button className="flex items-center space-x-2 px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-300">
+                <span>{languages[language].flag}</span>
+                <span className="text-sm">{languages[language].name}</span>
+                <span>▼</span>
+              </button>
+              
+              {/* Language Dropdown */}
+              <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                {Object.entries(languages).map(([code, lang]) => (
+                  <button
+                    key={code}
+                    onClick={() => handleLanguageChange(code)}
+                    className={`w-full text-left px-4 py-3 hover:bg-green-50 transition duration-200 flex items-center space-x-3 ${
+                      language === code ? 'bg-green-50 text-green-600' : 'text-gray-700'
+                    }`}
+                  >
+                    <span className="text-lg">{lang.flag}</span>
+                    <span>{lang.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Auth Buttons */}
             <div className="flex items-center space-x-4">
-                <Link to="/login" className="text-green-600 hover:text-green-700 font-medium transition duration-300">
-                    Login
-                </Link>
-                <Link 
-                    to="/signup" 
-                    className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition duration-300 shadow-md"
-                >
-                    Sign Up
-                </Link>
+              <Link to="/login" className="text-green-600 hover:text-green-700 font-medium transition duration-300">
+                {t('nav.login')}
+              </Link>
+              <Link 
+                to="/signup" 
+                className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition duration-300 shadow-md"
+              >
+                {t('nav.signup')}
+              </Link>
             </div>
           </div>
 
@@ -75,32 +101,23 @@ const Navbar = () => {
           </button>
         </div>
 
-        {/* Mobile Menu Overlay and Sidebar - Only render when menu is open */}
+        {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden fixed inset-0 z-40">
-            {/* Semi-transparent Overlay */}
             <div 
               className="fixed inset-0 bg-black bg-opacity-30 transition-opacity duration-500"
               onClick={closeMenu}
             />
             
-            {/* Sidebar */}
-            <div 
-              className="fixed top-0 left-0 h-full w-4/5 max-w-sm bg-white shadow-2xl transform transition-transform duration-500 ease-in-out"
-            >
+            <div className="fixed top-0 left-0 h-full w-4/5 max-w-sm bg-white shadow-2xl transform transition-transform duration-500 ease-in-out">
               {/* Sidebar Header */}
               <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-green-50">
-                <div className="flex items-center">
+                <Link to="/" className="flex items-center" onClick={closeMenu}>
                   <span className="text-2xl text-green-600">🌱</span>
                   <span className="ml-2 text-xl font-bold text-green-800">AgriMatch</span>
-                </div>
-                <button 
-                  onClick={closeMenu}
-                  className="p-2 rounded-lg hover:bg-green-100 transition duration-300"
-                >
-                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                </Link>
+                <button onClick={closeMenu} className="p-2 rounded-lg hover:bg-green-100 transition duration-300">
+                  ✕
                 </button>
               </div>
 
@@ -109,81 +126,51 @@ const Navbar = () => {
                 <div className="space-y-8">
                   {/* Navigation Links */}
                   <div className="space-y-4">
-                    <a 
-                      href="#farmers" 
-                      className="block text-lg font-medium text-gray-700 hover:text-green-600 py-3 transition-all duration-300 hover:pl-4 hover:bg-green-50 rounded-lg"
-                      onClick={closeMenu}
-                    >
-                      👨‍🌾 Farmers
+                    <a href="#farmers" className="block text-lg font-medium text-gray-700 hover:text-green-600 py-3 transition-all duration-300 hover:pl-4 hover:bg-green-50 rounded-lg" onClick={closeMenu}>
+                      👨‍🌾 {t('nav.farmers')}
                     </a>
-                    <a 
-                      href="#transport" 
-                      className="block text-lg font-medium text-gray-700 hover:text-green-600 py-3 transition-all duration-300 hover:pl-4 hover:bg-green-50 rounded-lg"
-                      onClick={closeMenu}
-                    >
-                      🚚 Transport
+                    <a href="#transport" className="block text-lg font-medium text-gray-700 hover:text-green-600 py-3 transition-all duration-300 hover:pl-4 hover:bg-green-50 rounded-lg" onClick={closeMenu}>
+                      🚚 {t('nav.transport')}
                     </a>
-                    <a 
-                      href="#cold-storage" 
-                      className="block text-lg font-medium text-gray-700 hover:text-green-600 py-3 transition-all duration-300 hover:pl-4 hover:bg-green-50 rounded-lg"
-                      onClick={closeMenu}
-                    >
-                      ❄️ Cold Storage
+                    <a href="#cold-storage" className="block text-lg font-medium text-gray-700 hover:text-green-600 py-3 transition-all duration-300 hover:pl-4 hover:bg-green-50 rounded-lg" onClick={closeMenu}>
+                      ❄️ {t('nav.coldStorage')}
                     </a>
-                    <a 
-                      href="#buyers" 
-                      className="block text-lg font-medium text-gray-700 hover:text-green-600 py-3 transition-all duration-300 hover:pl-4 hover:bg-green-50 rounded-lg"
-                      onClick={closeMenu}
-                    >
-                      👨‍💼 Buyers
+                    <a href="#buyers" className="block text-lg font-medium text-gray-700 hover:text-green-600 py-3 transition-all duration-300 hover:pl-4 hover:bg-green-50 rounded-lg" onClick={closeMenu}>
+                      👨‍💼 {t('nav.buyers')}
                     </a>
                   </div>
 
                   {/* Language Selector */}
                   <div className="pt-6 border-t border-gray-200">
                     <label className="block text-sm font-medium text-gray-700 mb-3">
-                      🌐 Language
+                      🌐 भाषा / Language
                     </label>
-                    <select 
-                      value={language}
-                      onChange={(e) => setLanguage(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-300"
-                    >
-                      <option value="EN">English</option>
-                      <option value="HI">Hindi</option>
-                      <option value="TE">Telugu</option>
-                      <option value="TA">Tamil</option>
-                    </select>
+                    <div className="space-y-2">
+                      {Object.entries(languages).map(([code, lang]) => (
+                        <button
+                          key={code}
+                          onClick={() => handleLanguageChange(code)}
+                          className={`w-full text-left px-4 py-3 rounded-lg border transition duration-200 flex items-center space-x-3 ${
+                            language === code 
+                              ? 'bg-green-100 border-green-500 text-green-700' 
+                              : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          <span className="text-lg">{lang.flag}</span>
+                          <span className="font-medium">{lang.name}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Auth Buttons */}
                   <div className="pt-6 border-t border-gray-200 space-y-4">
-                    <button 
-                      className="w-full text-green-600 hover:text-green-700 font-medium py-3 text-lg transition-all duration-300 hover:bg-green-50 rounded-lg border-2 border-green-600"
-                      onClick={closeMenu}
-                    >
-                      Login
-                    </button>
-                    <button 
-                      className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-all duration-300 shadow-lg text-lg hover:shadow-xl"
-                      onClick={closeMenu}
-                    >
-                      Sign Up
-                    </button>
-                  </div>
-
-                  {/* Additional Info */}
-                  <div className="pt-6 border-t border-gray-200">
-                    <div className="text-sm text-gray-600 space-y-3">
-                      <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                        <span className="mr-3 text-lg">📞</span>
-                        <span>+91 1800-AGR-HELP</span>
-                      </div>
-                      <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                        <span className="mr-3 text-lg">📧</span>
-                        <span>support@agrimatch.com</span>
-                      </div>
-                    </div>
+                    <Link to="/login" className="block w-full text-green-600 hover:text-green-700 font-medium py-3 text-lg transition-all duration-300 hover:bg-green-50 rounded-lg border-2 border-green-600 text-center" onClick={closeMenu}>
+                      🔑 {t('nav.login')}
+                    </Link>
+                    <Link to="/signup" className="block w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-all duration-300 shadow-lg text-lg hover:shadow-xl text-center" onClick={closeMenu}>
+                      ✨ {t('nav.signup')}
+                    </Link>
                   </div>
                 </div>
               </div>

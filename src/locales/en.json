@@ -1,0 +1,123 @@
+{
+  "nav": {
+    "farmers": "Farmers",
+    "transport": "Transport",
+    "coldStorage": "Cold Storage",
+    "buyers": "Buyers",
+    "login": "Login",
+    "signup": "Sign Up"
+  },
+  "hero": {
+    "title": "Connecting Farmers with Opportunities",
+    "subtitle": "AgriMatch bridges the gap between local farmers and potential buyers, investors, and service providers. Empower your agricultural journey with direct market access, reliable transport, cold storage solutions, and fair pricing.",
+    "farmerBtn": "Join as Farmer",
+    "buyerBtn": "Join as Buyer",
+    "stats": {
+      "farmers": "Farmers",
+      "buyers": "Buyers",
+      "cities": "Cities"
+    }
+  },
+  "features": {
+    "title": "Why Choose AgriMatch?",
+    "subtitle": "We provide comprehensive solutions to transform agricultural supply chains and empower farming communities",
+    "matching": "Smart Matching",
+    "matchingDesc": "AI-powered matching connects farmers with the most suitable buyers and service providers",
+    "pricing": "Fair Pricing",
+    "pricingDesc": "Transparent pricing without middlemen, ensuring farmers get what they deserve",
+    "logistics": "Logistics Support",
+    "logisticsDesc": "Integrated transport and cold storage solutions for seamless delivery",
+    "insights": "Market Insights",
+    "insightsDesc": "Real-time market data and trends to help make informed decisions",
+    "rating": "Rating System",
+    "ratingDesc": "Trust-based rating system for all stakeholders in the ecosystem",
+    "payments": "Secure Payments",
+    "paymentsDesc": "Safe and secure payment gateway with multiple payment options"
+  },
+  "organicFarmers": {
+    "title": "Featured Organic Farmers",
+    "subtitle": "Meet our certified organic farmers who are producing high-quality, sustainable crops",
+    "viewProfile": "View Profile",
+    "certified": "Certified Organic",
+    "location": "Location",
+    "crops": "Crops"
+  },
+  "services": {
+    "title": "Our Ecosystem",
+    "subtitle": "Connect with trusted partners across the agricultural value chain",
+    "farmers": "Top Rated Farmers",
+    "transport": "Transport Partners",
+    "coldStorage": "Cold Storage",
+    "buyers": "Verified Buyers",
+    "connect": "Connect Now"
+  },
+  "reviews": {
+    "title": "What Our Users Say",
+    "subtitle": "Hear from farmers, buyers, and service providers who have transformed their agricultural business"
+  },
+  "footer": {
+    "description": "Connecting farmers with buyers, transporters, and storage providers to create a seamless agricultural ecosystem.",
+    "quickLinks": "Quick Links",
+    "support": "Support",
+    "contact": "Contact Us",
+    "rights": "Empowering farmers, transforming agriculture."
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in to your account",
+      "createAccount": "create a new account",
+      "email": "Email Address",
+      "password": "Password",
+      "remember": "Remember me",
+      "forgotPassword": "Forgot your password?",
+      "signin": "Sign in",
+      "orContinue": "Or continue with",
+      "google": "Continue with Google",
+      "voiceHelp": "Voice Input Available: Click the microphone icon to speak instead of type"
+    },
+    "signup": {
+      "title": "Create your account",
+      "existingAccount": "sign in to existing account",
+      "fullName": "Full Name",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "userType": "I am a",
+      "userTypes": {
+        "farmer": "Farmer",
+        "buyer": "Buyer/Business",
+        "transporter": "Transport Provider",
+        "storage": "Cold Storage Owner"
+      },
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "terms": "I agree to the Terms and Conditions",
+      "createAccount": "Create Account",
+      "voiceHelp": "Voice Input Available: Perfect for users who prefer speaking over typing"
+    },
+    "placeholders": {
+      "enterEmail": "Enter your email",
+      "enterPassword": "Enter your password",
+      "enterFullName": "Enter your full name",
+      "enterPhone": "Enter your phone number",
+      "createPassword": "Create a password",
+      "confirmPassword": "Confirm your password"
+    },
+    "voice": {
+      "sayEmail": "Say your email",
+      "sayPassword": "Say your password",
+      "sayFullName": "Say your full name",
+      "sayPhone": "Say your phone number"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "welcome": "Welcome",
+    "logout": "Logout",
+    "profile": "Profile",
+    "matches": "Matches",
+    "messages": "Messages",
+    "completeProfile": "Complete your profile to get better matches",
+    "viewMatches": "View your potential matches",
+    "checkMessages": "Check your conversations"
+  }
+}

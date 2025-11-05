@@ -1,37 +1,40 @@
 // components/Features.js
 import React from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 const Features = () => {
+  const { t } = useLanguage();
+
   const features = [
     {
       icon: '🤝',
-      title: 'Smart Matching',
-      description: 'AI-powered matching connects farmers with the most suitable buyers and service providers'
+      titleKey: 'features.matching',
+      descKey: 'features.matchingDesc'
     },
     {
       icon: '💸',
-      title: 'Fair Pricing',
-      description: 'Transparent pricing without middlemen, ensuring farmers get what they deserve'
+      titleKey: 'features.pricing',
+      descKey: 'features.pricingDesc'
     },
     {
       icon: '🚚',
-      title: 'Logistics Support',
-      description: 'Integrated transport and cold storage solutions for seamless delivery'
+      titleKey: 'features.logistics',
+      descKey: 'features.logisticsDesc'
     },
     {
       icon: '📊',
-      title: 'Market Insights',
-      description: 'Real-time market data and trends to help make informed decisions'
+      titleKey: 'features.insights',
+      descKey: 'features.insightsDesc'
     },
     {
       icon: '⭐',
-      title: 'Rating System',
-      description: 'Trust-based rating system for all stakeholders in the ecosystem'
+      titleKey: 'features.rating',
+      descKey: 'features.ratingDesc'
     },
     {
       icon: '🔒',
-      title: 'Secure Payments',
-      description: 'Safe and secure payment gateway with multiple payment options'
+      titleKey: 'features.payments',
+      descKey: 'features.paymentsDesc'
     }
   ];
 
@@ -40,10 +43,10 @@ const Features = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold text-gray-800 mb-4">
-            Why Choose <span className="text-green-600">AgriMatch</span>?
+            {t('features.title')}
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            We provide comprehensive solutions to transform agricultural supply chains and empower farming communities
+            {t('features.subtitle')}
           </p>
         </div>
 
@@ -57,10 +60,10 @@ const Features = () => {
                 {feature.icon}
               </div>
               <h3 className="text-xl font-semibold text-gray-800 mb-3">
-                {feature.title}
+                {t(feature.titleKey)}
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                {feature.description}
+                {t(feature.descKey)}
               </p>
             </div>
           ))}
@@ -70,4 +73,4 @@ const Features = () => {
   );
 };
 
-export default Features;    
+export default Features;

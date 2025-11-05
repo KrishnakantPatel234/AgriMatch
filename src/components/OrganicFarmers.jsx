@@ -1,7 +1,10 @@
 // components/OrganicFarmers.js
 import React from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 const OrganicFarmers = () => {
+  const { t } = useLanguage();
+
   const farmers = [
     {
       name: 'Rajesh Kumar',
@@ -13,7 +16,7 @@ const OrganicFarmers = () => {
       certified: true
     },
     {
-      name: 'Priya Sharma',
+      name: 'Priya Sharma', 
       farm: 'Nature\'s Blessing Farm',
       location: 'Maharashtra',
       crops: ['Organic Vegetables', 'Herbs'],
@@ -24,7 +27,7 @@ const OrganicFarmers = () => {
     {
       name: 'Arun Patel',
       farm: 'Eco Harvest',
-      location: 'Gujarat',
+      location: 'Gujarat', 
       crops: ['Organic Cotton', 'Groundnuts'],
       rating: 4.7,
       image: '👨‍🌾',
@@ -37,10 +40,10 @@ const OrganicFarmers = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold text-gray-800 mb-4">
-            Featured <span className="text-green-600">Organic Farmers</span>
+            {t('organicFarmers.title')}
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Meet our certified organic farmers who are producing high-quality, sustainable crops
+            {t('organicFarmers.subtitle')}
           </p>
         </div>
 
@@ -74,7 +77,7 @@ const OrganicFarmers = () => {
                   </div>
                   {farmer.certified && (
                     <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
-                      Certified Organic
+                      {t('organicFarmers.certified')}
                     </span>
                   )}
                 </div>
@@ -82,7 +85,7 @@ const OrganicFarmers = () => {
               
               <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
                 <button className="w-full bg-green-600 text-white py-2 rounded-lg font-medium hover:bg-green-700 transition duration-300">
-                  View Profile
+                  {t('organicFarmers.viewProfile')}
                 </button>
               </div>
             </div>

@@ -1,14 +1,24 @@
 // pages/Login.js
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import VoiceInput from '../components/VoiceInput';
-import Navbar from '../components/Navbar';
+import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+  const { user, loginWithGoogle, loading } = useAuth();
+  const { t } = useLanguage();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const handleChange = (field, value) => {
     setFormData(prev => ({
@@ -20,13 +30,25 @@ const Login = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Login data:', formData);
-    // Handle login logic here
   };
 
+  const handleGoogleLogin = () => {
+    loginWithGoogle();
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">{t('common.loading')}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    
-    <div>
-        <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
@@ -35,12 +57,12 @@ const Login = () => {
             <span className="ml-3 text-3xl font-bold text-green-800">AgriMatch</span>
           </div>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Sign in to your account
+            {t('auth.login.title')}
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Or{' '}
+            {t('auth.login.orContinue')}{' '}
             <Link to="/signup" className="font-medium text-green-600 hover:text-green-500">
-              create a new account
+              {t('auth.login.createAccount')}
             </Link>
           </p>
         </div>
@@ -51,7 +73,7 @@ const Login = () => {
             {/* Email Field */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
+                {t('auth.login.email')}
               </label>
               <div className="relative">
                 <input
@@ -62,12 +84,12 @@ const Login = () => {
                   value={formData.email}
                   onChange={(e) => handleChange('email', e.target.value)}
                   className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  placeholder="Enter your email"
+                  placeholder={t('auth.placeholders.enterEmail')}
                 />
                 <div className="absolute right-3 top-3">
                   <VoiceInput 
                     onTextChange={(text) => handleChange('email', text)}
-                    placeholder="Say your email"
+                    placeholder={t('auth.voice.sayEmail')}
                   />
                 </div>
               </div>
@@ -76,7 +98,7 @@ const Login = () => {
             {/* Password Field */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
+                {t('auth.login.password')}
               </label>
               <div className="relative">
                 <input
@@ -87,12 +109,12 @@ const Login = () => {
                   value={formData.password}
                   onChange={(e) => handleChange('password', e.target.value)}
                   className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  placeholder="Enter your password"
+                  placeholder={t('auth.placeholders.enterPassword')}
                 />
                 <div className="absolute right-3 top-3">
                   <VoiceInput 
                     onTextChange={(text) => handleChange('password', text)}
-                    placeholder="Say your password"
+                    placeholder={t('auth.voice.sayPassword')}
                   />
                 </div>
               </div>
@@ -109,13 +131,13 @@ const Login = () => {
                 className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
               />
               <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                Remember me
+                {t('auth.login.remember')}
               </label>
             </div>
 
             <div className="text-sm">
               <a href="#" className="font-medium text-green-600 hover:text-green-500">
-                Forgot your password?
+                {t('auth.login.forgotPassword')}
               </a>
             </div>
           </div>
@@ -126,7 +148,7 @@ const Login = () => {
               type="submit"
               className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-300 transform hover:scale-105"
             >
-              Sign in
+              {t('auth.login.signin')}
             </button>
           </div>
 
@@ -137,24 +159,24 @@ const Login = () => {
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                <span className="px-2 bg-white text-gray-500">{t('auth.login.orContinue')}</span>
               </div>
             </div>
           </div>
 
           {/* Social Login */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <button
               type="button"
-              className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition duration-300"
+              onClick={handleGoogleLogin}
+              className="w-full inline-flex justify-center items-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition duration-300 hover:shadow-md"
             >
-              <span>📘 Facebook</span>
-            </button>
-            <button
-              type="button"
-              className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition duration-300"
-            >
-              <span>📷 Google</span>
+              <img 
+                src="https://developers.google.com/identity/images/g-logo.png" 
+                alt="Google" 
+                className="w-5 h-5 mr-3"
+              />
+              <span>{t('auth.login.google')}</span>
             </button>
           </div>
         </form>
@@ -162,12 +184,10 @@ const Login = () => {
         {/* Voice Assistance Info */}
         <div className="text-center">
           <p className="text-sm text-gray-600">
-            <span className="font-semibold text-green-600">Voice Input Available:</span>{' '}
-            Click the microphone icon to speak instead of type
+            {t('auth.login.voiceHelp')}
           </p>
         </div>
       </div>
-    </div>
     </div>
   );
 };

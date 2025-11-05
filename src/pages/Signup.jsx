@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import VoiceInput from '../components/VoiceInput';
+import { useLanguage } from '../context/LanguageContext';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -12,6 +13,7 @@ const Signup = () => {
     password: '',
     confirmPassword: ''
   });
+  const { t } = useLanguage();
 
   const handleChange = (field, value) => {
     setFormData(prev => ({
@@ -23,7 +25,6 @@ const Signup = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Signup data:', formData);
-    // Handle signup logic here
   };
 
   return (
@@ -36,12 +37,12 @@ const Signup = () => {
             <span className="ml-3 text-3xl font-bold text-green-800">AgriMatch</span>
           </div>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Create your account
+            {t('auth.signup.title')}
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Or{' '}
+            {t('auth.signup.orContinue')}{' '}
             <Link to="/login" className="font-medium text-green-600 hover:text-green-500">
-              sign in to existing account
+              {t('auth.signup.existingAccount')}
             </Link>
           </p>
         </div>
@@ -52,7 +53,7 @@ const Signup = () => {
             {/* Full Name */}
             <div>
               <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name
+                {t('auth.signup.fullName')}
               </label>
               <div className="relative">
                 <input
@@ -63,12 +64,12 @@ const Signup = () => {
                   value={formData.fullName}
                   onChange={(e) => handleChange('fullName', e.target.value)}
                   className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  placeholder="Enter your full name"
+                  placeholder={t('auth.placeholders.enterFullName')}
                 />
                 <div className="absolute right-3 top-3">
                   <VoiceInput 
                     onTextChange={(text) => handleChange('fullName', text)}
-                    placeholder="Say your full name"
+                    placeholder={t('auth.voice.sayFullName')}
                   />
                 </div>
               </div>
@@ -77,7 +78,7 @@ const Signup = () => {
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
+                {t('auth.signup.email')}
               </label>
               <div className="relative">
                 <input
@@ -88,12 +89,12 @@ const Signup = () => {
                   value={formData.email}
                   onChange={(e) => handleChange('email', e.target.value)}
                   className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  placeholder="Enter your email"
+                  placeholder={t('auth.placeholders.enterEmail')}
                 />
                 <div className="absolute right-3 top-3">
                   <VoiceInput 
                     onTextChange={(text) => handleChange('email', text)}
-                    placeholder="Say your email"
+                    placeholder={t('auth.voice.sayEmail')}
                   />
                 </div>
               </div>
@@ -102,7 +103,7 @@ const Signup = () => {
             {/* Phone Number */}
             <div>
               <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                Phone Number
+                {t('auth.signup.phone')}
               </label>
               <div className="relative">
                 <input
@@ -113,12 +114,12 @@ const Signup = () => {
                   value={formData.phone}
                   onChange={(e) => handleChange('phone', e.target.value)}
                   className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  placeholder="Enter your phone number"
+                  placeholder={t('auth.placeholders.enterPhone')}
                 />
                 <div className="absolute right-3 top-3">
                   <VoiceInput 
                     onTextChange={(text) => handleChange('phone', text)}
-                    placeholder="Say your phone number"
+                    placeholder={t('auth.voice.sayPhone')}
                   />
                 </div>
               </div>
@@ -127,7 +128,7 @@ const Signup = () => {
             {/* User Type */}
             <div>
               <label htmlFor="userType" className="block text-sm font-medium text-gray-700 mb-2">
-                I am a
+                {t('auth.signup.userType')}
               </label>
               <select
                 id="userType"
@@ -136,17 +137,17 @@ const Signup = () => {
                 onChange={(e) => handleChange('userType', e.target.value)}
                 className="appearance-none relative block w-full px-4 py-3 border border-gray-300 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               >
-                <option value="farmer">👨‍🌾 Farmer</option>
-                <option value="buyer">👨‍💼 Buyer/Business</option>
-                <option value="transporter">🚚 Transport Provider</option>
-                <option value="storage">❄️ Cold Storage Owner</option>
+                <option value="farmer">👨‍🌾 {t('auth.signup.userTypes.farmer')}</option>
+                <option value="buyer">👨‍💼 {t('auth.signup.userTypes.buyer')}</option>
+                <option value="transporter">🚚 {t('auth.signup.userTypes.transporter')}</option>
+                <option value="storage">❄️ {t('auth.signup.userTypes.storage')}</option>
               </select>
             </div>
 
             {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
+                {t('auth.signup.password')}
               </label>
               <div className="relative">
                 <input
@@ -157,12 +158,12 @@ const Signup = () => {
                   value={formData.password}
                   onChange={(e) => handleChange('password', e.target.value)}
                   className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  placeholder="Create a password"
+                  placeholder={t('auth.placeholders.createPassword')}
                 />
                 <div className="absolute right-3 top-3">
                   <VoiceInput 
                     onTextChange={(text) => handleChange('password', text)}
-                    placeholder="Say your password"
+                    placeholder={t('auth.voice.sayPassword')}
                   />
                 </div>
               </div>
@@ -171,7 +172,7 @@ const Signup = () => {
             {/* Confirm Password */}
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                Confirm Password
+                {t('auth.signup.confirmPassword')}
               </label>
               <div className="relative">
                 <input
@@ -182,12 +183,12 @@ const Signup = () => {
                   value={formData.confirmPassword}
                   onChange={(e) => handleChange('confirmPassword', e.target.value)}
                   className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  placeholder="Confirm your password"
+                  placeholder={t('auth.placeholders.confirmPassword')}
                 />
                 <div className="absolute right-3 top-3">
                   <VoiceInput 
                     onTextChange={(text) => handleChange('confirmPassword', text)}
-                    placeholder="Say password again"
+                    placeholder={t('auth.voice.sayPassword')}
                   />
                 </div>
               </div>
@@ -204,10 +205,7 @@ const Signup = () => {
               className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
             />
             <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
-              I agree to the{' '}
-              <a href="#" className="text-green-600 hover:text-green-500">
-                Terms and Conditions
-              </a>
+              {t('auth.signup.terms')}
             </label>
           </div>
 
@@ -217,7 +215,7 @@ const Signup = () => {
               type="submit"
               className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-300 transform hover:scale-105"
             >
-              Create Account
+              {t('auth.signup.createAccount')}
             </button>
           </div>
         </form>
@@ -225,8 +223,7 @@ const Signup = () => {
         {/* Voice Assistance Info */}
         <div className="text-center">
           <p className="text-sm text-gray-600">
-            <span className="font-semibold text-green-600">Voice Input Available:</span>{' '}
-            Perfect for users who prefer speaking over typing
+            {t('auth.signup.voiceHelp')}
           </p>
         </div>
       </div>
