@@ -1,4 +1,3 @@
-// components/Navbar.js
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
@@ -32,18 +31,19 @@ const Navbar = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#farmers" className="text-gray-700 hover:text-green-600 font-medium transition duration-300">
+            {/* FIXED: Using Link instead of anchor tags */}
+            <Link to="/farmers" className="text-gray-700 hover:text-green-600 font-medium transition duration-300">
               {t('nav.farmers')}
-            </a>
-            <a href="#transport" className="text-gray-700 hover:text-green-600 font-medium transition duration-300">
+            </Link>
+            <Link to="/transport" className="text-gray-700 hover:text-green-600 font-medium transition duration-300">
               {t('nav.transport')}
-            </a>
-            <a href="#cold-storage" className="text-gray-700 hover:text-green-600 font-medium transition duration-300">
+            </Link>
+            <Link to="/cold-storage" className="text-gray-700 hover:text-green-600 font-medium transition duration-300">
               {t('nav.coldStorage')}
-            </a>
-            <a href="#buyers" className="text-gray-700 hover:text-green-600 font-medium transition duration-300">
+            </Link>
+            <Link to="/buyers" className="text-gray-700 hover:text-green-600 font-medium transition duration-300">
               {t('nav.buyers')}
-            </a>
+            </Link>
             
             {/* Language Selector */}
             <div className="relative group">
@@ -124,20 +124,20 @@ const Navbar = () => {
               {/* Sidebar Content */}
               <div className="p-6 h-full overflow-y-auto bg-white">
                 <div className="space-y-8">
-                  {/* Navigation Links */}
+                  {/* Navigation Links - FIXED: Using Link */}
                   <div className="space-y-4">
-                    <a href="#farmers" className="block text-lg font-medium text-gray-700 hover:text-green-600 py-3 transition-all duration-300 hover:pl-4 hover:bg-green-50 rounded-lg" onClick={closeMenu}>
+                    <Link to="/farmers" className="block text-lg font-medium text-gray-700 hover:text-green-600 py-3 transition-all duration-300 hover:pl-4 hover:bg-green-50 rounded-lg" onClick={closeMenu}>
                       👨‍🌾 {t('nav.farmers')}
-                    </a>
-                    <a href="#transport" className="block text-lg font-medium text-gray-700 hover:text-green-600 py-3 transition-all duration-300 hover:pl-4 hover:bg-green-50 rounded-lg" onClick={closeMenu}>
+                    </Link>
+                    <Link to="/transport" className="block text-lg font-medium text-gray-700 hover:text-green-600 py-3 transition-all duration-300 hover:pl-4 hover:bg-green-50 rounded-lg" onClick={closeMenu}>
                       🚚 {t('nav.transport')}
-                    </a>
-                    <a href="#cold-storage" className="block text-lg font-medium text-gray-700 hover:text-green-600 py-3 transition-all duration-300 hover:pl-4 hover:bg-green-50 rounded-lg" onClick={closeMenu}>
+                    </Link>
+                    <Link to="/cold-storage" className="block text-lg font-medium text-gray-700 hover:text-green-600 py-3 transition-all duration-300 hover:pl-4 hover:bg-green-50 rounded-lg" onClick={closeMenu}>
                       ❄️ {t('nav.coldStorage')}
-                    </a>
-                    <a href="#buyers" className="block text-lg font-medium text-gray-700 hover:text-green-600 py-3 transition-all duration-300 hover:pl-4 hover:bg-green-50 rounded-lg" onClick={closeMenu}>
+                    </Link>
+                    <Link to="/buyers" className="block text-lg font-medium text-gray-700 hover:text-green-600 py-3 transition-all duration-300 hover:pl-4 hover:bg-green-50 rounded-lg" onClick={closeMenu}>
                       👨‍💼 {t('nav.buyers')}
-                    </a>
+                    </Link>
                   </div>
 
                   {/* Language Selector */}

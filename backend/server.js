@@ -14,6 +14,7 @@ app.use(cors({
   origin: 'http://localhost:5173',
   credentials: true
 }));
+
 app.use(express.json());
 app.use(session({
   secret: process.env.SESSION_SECRET,
@@ -37,6 +38,11 @@ mongoose.connect(process.env.MONGODB_URI, {
 
 // Routes
 app.use('/auth', require('./routes/auth'));
+app.use('/api/farmers', require('./routes/farmers'));
+app.use('/api/farmers', require('./routes/farmers'));
+app.use('/api/transport', require('./routes/transport'));
+app.use('/api/cold-storage', require('./routes/coldStorage'));
+app.use('/api/buyers', require('./routes/buyers'));
 
 // Test route
 app.get('/api', (req, res) => {

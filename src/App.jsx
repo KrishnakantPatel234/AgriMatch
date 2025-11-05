@@ -13,6 +13,11 @@ import Footer from './components/Footer';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
+import FarmersDirectory from './pages/FarmsDirectory';
+import TransportDirectory from './pages/TransportDirectory';
+import ColdStorageDirectory from './pages/ColdStorageDirectory';
+import BuyersDirectory from './pages/BuyersDirectory';
+
 
 function App() {
   return (
@@ -23,7 +28,10 @@ function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/farmers" element={<FarmersDirectory />} />
+              <Route path="/transport" element={<TransportDirectory />} />
+              <Route path="/cold-storage" element={<ColdStorageDirectory />} />
+              <Route path="/buyers" element={<BuyersDirectory />} />
               <Route path="/" element={
                 <>
                   <Navbar />
