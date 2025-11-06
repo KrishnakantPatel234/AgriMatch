@@ -1,66 +1,124 @@
-// routes/auth.js
 const express = require('express');
-const passport = require('passport');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+const { protect } = require('../middleware/auth');
+
 const router = express.Router();
 
-// Successful authentication
-router.get('/login/success', (req, res) => {
-  if (req.user) {
-    res.status(200).json({
+const signToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || '30d'
+  });
+};
+
+// Register User
+router.post('/register', async (req, res) => {
+  try {
+    const { name, email, password, role, phone, address } = req.body;
+
+    // Check if user exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'User already exists with this email'
+      });
+    }
+
+    // Create user
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role,
+      phone,
+      address
+    });
+
+    // Generate token
+    const token = signToken(user._id);
+
+    res.status(201).json({
       success: true,
-      message: "Login successful",
+      message: 'User registered successfully',
+      token,
       user: {
-        id: req.user._id,
-        name: req.user.name,
-        email: req.user.email,
-        profileImage: req.user.profileImage,
-        userType: req.user.userType
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
       }
     });
-  } else {
-    res.status(401).json({
+
+  } catch (error) {
+    res.status(500).json({
       success: false,
-      message: "Not authenticated"
+      message: error.message
     });
   }
 });
 
-// Failed authentication
-router.get('/login/failed', (req, res) => {
-  res.status(401).json({
-    success: false,
-    message: "Login failed - Please try again"
-  });
-});
+// Login User
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-// Logout route
-router.get('/logout', (req, res, next) => {
-  req.logout((err) => {
-    if (err) return next(err);
-    req.session.destroy((err) => {
-      if (err) return next(err);
-      res.clearCookie('connect.sid');
-      res.json({ success: true, message: "Logged out successfully" });
+    // Check if email and password exist
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide email and password'
+      });
+    }
+
+    // Get user with password
+    const user = await User.findOne({ email }).select('+password');
+    
+    if (!user || !(await user.correctPassword(password, user.password))) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    // Generate token
+    const token = signToken(user._id);
+
+    res.json({
+      success: true,
+      message: 'Login successful',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
     });
-  });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
 });
 
-// Google Auth routes
-router.get('/google', 
-  passport.authenticate('google', { 
-    scope: ['profile', 'email'] 
-  })
-);
-
-router.get('/google/callback',
-  passport.authenticate('google', {
-    failureRedirect: `${process.env.CLIENT_URL}/login?error=auth_failed`,
-    failureMessage: true
-  }),
-  (req, res) => {
-    // Successful authentication
-    res.redirect(`${process.env.CLIENT_URL}/dashboard`);
+// Get Current User
+router.get('/me', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    
+    res.json({
+      success: true,
+      user
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
-);
+});
 
 module.exports = router;

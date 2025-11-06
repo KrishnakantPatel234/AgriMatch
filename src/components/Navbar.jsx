@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { language, languages, changeLanguage, t } = useLanguage();
+  const { user, logout } = useAuth();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -16,6 +19,12 @@ const Navbar = () => {
 
   const handleLanguageChange = (langCode) => {
     changeLanguage(langCode);
+    closeMenu();
+  };
+
+  const handleLogout = () => {
+    logout();
+    setIsProfileOpen(false);
     closeMenu();
   };
 
@@ -31,7 +40,7 @@ const Navbar = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
-            {/* FIXED: Using Link instead of anchor tags */}
+            {/* Navigation Links */}
             <Link to="/farmers" className="text-gray-700 hover:text-green-600 font-medium transition duration-300">
               {t('nav.farmers')}
             </Link>
@@ -70,18 +79,85 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* Auth Buttons */}
-            <div className="flex items-center space-x-4">
-              <Link to="/login" className="text-green-600 hover:text-green-700 font-medium transition duration-300">
-                {t('nav.login')}
-              </Link>
-              <Link 
-                to="/signup" 
-                className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition duration-300 shadow-md"
-              >
-                {t('nav.signup')}
-              </Link>
-            </div>
+            {/* Auth Buttons or User Profile */}
+            {user ? (
+              <div className="relative group">
+                <button 
+                  className="flex items-center space-x-3 bg-green-50 px-4 py-2 rounded-lg hover:bg-green-100 transition duration-300"
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                >
+                  <img 
+                    src={user.profilePicture} 
+                    alt={user.name}
+                    className="w-8 h-8 rounded-full border-2 border-green-500"
+                  />
+                  <div className="text-left">
+                    <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                    <p className="text-xs text-green-600 capitalize">{user.role}</p>
+                  </div>
+                  <span className="text-gray-600">▼</span>
+                </button>
+
+                {/* Profile Dropdown */}
+                <div className={`absolute top-full right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 transition-all duration-300 ${
+                  isProfileOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+                }`}>
+                  <div className="p-4 border-b border-gray-200">
+                    <p className="font-medium text-gray-900">{user.name}</p>
+                    <p className="text-sm text-gray-600">{user.email}</p>
+                  </div>
+                  
+                  <div className="p-2">
+                    <Link 
+                      to="/dashboard" 
+                      className="flex items-center space-x-3 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-lg transition duration-200"
+                      onClick={() => setIsProfileOpen(false)}
+                    >
+                      <span>📊</span>
+                      <span>{t('common.profile')}</span>
+                    </Link>
+                    <Link 
+                      to="/dashboard/matches" 
+                      className="flex items-center space-x-3 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-lg transition duration-200"
+                      onClick={() => setIsProfileOpen(false)}
+                    >
+                      <span>💫</span>
+                      <span>{t('common.matches')}</span>
+                    </Link>
+                    <Link 
+                      to="/dashboard/messages" 
+                      className="flex items-center space-x-3 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-lg transition duration-200"
+                      onClick={() => setIsProfileOpen(false)}
+                    >
+                      <span>💬</span>
+                      <span>{t('common.messages')}</span>
+                    </Link>
+                  </div>
+                  
+                  <div className="p-2 border-t border-gray-200">
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center space-x-3 w-full px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition duration-200"
+                    >
+                      <span>🚪</span>
+                      <span>{t('common.logout')}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-4">
+                <Link to="/login" className="text-green-600 hover:text-green-700 font-medium transition duration-300">
+                  {t('nav.login')}
+                </Link>
+                <Link 
+                  to="/signup" 
+                  className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition duration-300 shadow-md"
+                >
+                  {t('nav.signup')}
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -124,7 +200,24 @@ const Navbar = () => {
               {/* Sidebar Content */}
               <div className="p-6 h-full overflow-y-auto bg-white">
                 <div className="space-y-8">
-                  {/* Navigation Links - FIXED: Using Link */}
+                  {/* User Info if logged in */}
+                  {user && (
+                    <div className="bg-green-50 rounded-lg p-4">
+                      <div className="flex items-center space-x-3">
+                        <img 
+                          src={user.profilePicture} 
+                          alt={user.name}
+                          className="w-12 h-12 rounded-full border-2 border-green-500"
+                        />
+                        <div>
+                          <p className="font-medium text-gray-900">{user.name}</p>
+                          <p className="text-sm text-green-600 capitalize">{user.role}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Navigation Links */}
                   <div className="space-y-4">
                     <Link to="/farmers" className="block text-lg font-medium text-gray-700 hover:text-green-600 py-3 transition-all duration-300 hover:pl-4 hover:bg-green-50 rounded-lg" onClick={closeMenu}>
                       👨‍🌾 {t('nav.farmers')}
@@ -165,12 +258,28 @@ const Navbar = () => {
 
                   {/* Auth Buttons */}
                   <div className="pt-6 border-t border-gray-200 space-y-4">
-                    <Link to="/login" className="block w-full text-green-600 hover:text-green-700 font-medium py-3 text-lg transition-all duration-300 hover:bg-green-50 rounded-lg border-2 border-green-600 text-center" onClick={closeMenu}>
-                      🔑 {t('nav.login')}
-                    </Link>
-                    <Link to="/signup" className="block w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-all duration-300 shadow-lg text-lg hover:shadow-xl text-center" onClick={closeMenu}>
-                      ✨ {t('nav.signup')}
-                    </Link>
+                    {user ? (
+                      <>
+                        <Link to="/dashboard" className="block w-full text-green-600 hover:text-green-700 font-medium py-3 text-lg transition-all duration-300 hover:bg-green-50 rounded-lg border-2 border-green-600 text-center" onClick={closeMenu}>
+                          📊 {t('common.profile')}
+                        </Link>
+                        <button
+                          onClick={handleLogout}
+                          className="block w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-all duration-300 shadow-lg text-lg hover:shadow-xl text-center"
+                        >
+                          🚪 {t('common.logout')}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <Link to="/login" className="block w-full text-green-600 hover:text-green-700 font-medium py-3 text-lg transition-all duration-300 hover:bg-green-50 rounded-lg border-2 border-green-600 text-center" onClick={closeMenu}>
+                          🔑 {t('nav.login')}
+                        </Link>
+                        <Link to="/signup" className="block w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-all duration-300 shadow-lg text-lg hover:shadow-xl text-center" onClick={closeMenu}>
+                          ✨ {t('nav.signup')}
+                        </Link>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

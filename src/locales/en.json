@@ -34,34 +34,6 @@
     "payments": "Secure Payments",
     "paymentsDesc": "Safe and secure payment gateway with multiple payment options"
   },
-  "organicFarmers": {
-    "title": "Featured Organic Farmers",
-    "subtitle": "Meet our certified organic farmers who are producing high-quality, sustainable crops",
-    "viewProfile": "View Profile",
-    "certified": "Certified Organic",
-    "location": "Location",
-    "crops": "Crops"
-  },
-  "services": {
-    "title": "Our Ecosystem",
-    "subtitle": "Connect with trusted partners across the agricultural value chain",
-    "farmers": "Top Rated Farmers",
-    "transport": "Transport Partners",
-    "coldStorage": "Cold Storage",
-    "buyers": "Verified Buyers",
-    "connect": "Connect Now"
-  },
-  "reviews": {
-    "title": "What Our Users Say",
-    "subtitle": "Hear from farmers, buyers, and service providers who have transformed their agricultural business"
-  },
-  "footer": {
-    "description": "Connecting farmers with buyers, transporters, and storage providers to create a seamless agricultural ecosystem.",
-    "quickLinks": "Quick Links",
-    "support": "Support",
-    "contact": "Contact Us",
-    "rights": "Empowering farmers, transforming agriculture."
-  },
   "auth": {
     "login": {
       "title": "Sign in to your account",
@@ -78,6 +50,7 @@
     "signup": {
       "title": "Create your account",
       "existingAccount": "sign in to existing account",
+      "orContinue": "Or",
       "fullName": "Full Name",
       "email": "Email Address",
       "phone": "Phone Number",

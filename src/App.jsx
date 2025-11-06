@@ -17,7 +17,12 @@ import FarmersDirectory from './pages/FarmsDirectory';
 import TransportDirectory from './pages/TransportDirectory';
 import ColdStorageDirectory from './pages/ColdStorageDirectory';
 import BuyersDirectory from './pages/BuyersDirectory';
-
+import FarmerDashboard from './pages/dashboard/FarmerDashboard';
+import BuyerDashboard from './pages/dashboard/BuyerDashboard';
+import StorageDashboard from './pages/dashboard/StorageDashboard';
+import TransportDashboard from './pages/dashboard/TransportDashboard';
+import DashboardRouter from './components/DashboardRouter';
+import LanguageSelector from './components/LanguageSelector';
 
 function App() {
   return (
@@ -25,6 +30,7 @@ function App() {
       <AuthProvider>
         <Router>
           <div className="App">
+            {/* <LanguageSelector /> */}
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
@@ -32,6 +38,11 @@ function App() {
               <Route path="/transport" element={<TransportDirectory />} />
               <Route path="/cold-storage" element={<ColdStorageDirectory />} />
               <Route path="/buyers" element={<BuyersDirectory />} />
+              <Route path="/dashboard/farmer" element={<FarmerDashboard />} />
+              <Route path="/dashboard/buyer" element={<BuyerDashboard />} />
+              <Route path="/dashboard/transport" element={<TransportDashboard/>}/>
+              <Route path="/dashboard/storage" element={<StorageDashboard />} />
+              <Route path="/dashboard" element={<DashboardRouter />} />
               <Route path="/" element={
                 <>
                   <Navbar />

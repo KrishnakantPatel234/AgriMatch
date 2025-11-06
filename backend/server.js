@@ -1,69 +1,84 @@
-// server.js
 const express = require('express');
 const mongoose = require('mongoose');
-const passport = require('passport');
-const session = require('express-session');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
-require('./config/passport');
 
 const app = express();
 
-// Middleware
+// Security Middleware
+app.use(helmet());
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true
 }));
 
-app.use(express.json());
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: false,
-    maxAge: 24 * 60 * 60 * 1000
-  }
-}));
-app.use(passport.initialize());
-app.use(passport.session());
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
+app.use(limiter);
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI, {
+// Body Parser Middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// MongoDB Connection
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/agrimatch', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('✅ MongoDB connected successfully'))
-.catch(err => console.log('❌ MongoDB connection error:', err));
+.then(() => console.log('✅ MongoDB Connected Successfully'))
+.catch(err => {
+  console.error('❌ MongoDB Connection Error:', err);
+  process.exit(1);
+});
 
 // Routes
-app.use('/auth', require('./routes/auth'));
-app.use('/api/farmers', require('./routes/farmers'));
-app.use('/api/farmers', require('./routes/farmers'));
-app.use('/api/transport', require('./routes/transport'));
-app.use('/api/cold-storage', require('./routes/coldStorage'));
-app.use('/api/buyers', require('./routes/buyers'));
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/products', require('./routes/product'));
 
-// Test route
-app.get('/api', (req, res) => {
+
+// Basic Route
+app.get('/', (req, res) => {
   res.json({ 
-    message: 'AgriMatch API is running!',
+    message: '🚀 AgriMatch API is running!',
+    version: '1.0.0',
     timestamp: new Date().toISOString()
   });
 });
 
-// Health check route
+// Health Check
 app.get('/api/health', (req, res) => {
-  res.json({ 
+  res.status(200).json({
     status: 'OK',
     database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
     timestamp: new Date().toISOString()
   });
 });
 
+// Error Handling Middleware
+app.use((err, req, res, next) => {
+  console.error('🚨 Error:', err.stack);
+  res.status(500).json({
+    success: false,
+    message: 'Something went wrong!',
+    error: process.env.NODE_ENV === 'development' ? err.message : {}
+  });
+});
+
+// 404 Handler
+app.use('*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'API route not found'
+  });
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🔗 API available at: http://localhost:${PORT}/api`);
-  console.log(`🌐 Frontend URL: ${process.env.CLIENT_URL}`);
+  console.log(`🎯 Server running on port ${PORT}`);
+  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
