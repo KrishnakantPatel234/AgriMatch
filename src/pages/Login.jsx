@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
-import { useVoiceRecognition } from "../hooks/useVoiceRecognition";
+import { useVoiceRecognition } from "../hooks/UseVoiceRecognition";
 import { toast } from "react-toastify";
 import { FcGoogle } from "react-icons/fc";
 import { HiEye, HiEyeOff, HiMicrophone } from "react-icons/hi";
+import { authAPI } from "../services/Api";
 
 const Login = () => {
   const [formData, setFormData] = useState({ 
@@ -155,23 +156,66 @@ const Login = () => {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+  const { name, value } = e.target;
+  
+  // Auto-format phone number
+  if (name === "phone") {
+    // Remove all non-digit characters
+    const cleaned = value.replace(/\D/g, "");
     
-    // Auto-format phone number
-    if (name === "phone") {
-      const cleaned = value.replace(/\D/g, "");
-      let formatted = cleaned;
-      if (cleaned.length > 0) {
-        formatted = `+91 ${cleaned.slice(0, 5)}${cleaned.length > 5 ? ' ' + cleaned.slice(5, 10) : ''}${cleaned.length > 10 ? ' ' + cleaned.slice(10, 15) : ''}`;
-      }
-      setFormData(prev => ({ ...prev, [name]: formatted }));
-    } else if (name === "password") {
-      // Remove spaces from password
-      const cleanedPassword = value.replace(/\s/g, '');
-      setFormData(prev => ({ ...prev, [name]: cleanedPassword }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+    // If the input is empty or only contains +91, clear it
+    if (cleaned === '' || cleaned === '91') {
+      setFormData(prev => ({ ...prev, [name]: '' }));
+      return;
     }
+    
+    let formatted = '';
+    
+    // If the number starts with 91, remove it and format the rest
+    if (cleaned.startsWith('91') && cleaned.length > 2) {
+      const withoutCountryCode = cleaned.slice(2);
+      if (withoutCountryCode.length <= 5) {
+        formatted = `+91 ${withoutCountryCode}`;
+      } else if (withoutCountryCode.length <= 10) {
+        formatted = `+91 ${withoutCountryCode.slice(0, 5)} ${withoutCountryCode.slice(5)}`;
+      } else {
+        formatted = `+91 ${withoutCountryCode.slice(0, 5)} ${withoutCountryCode.slice(5, 10)} ${withoutCountryCode.slice(10, 15)}`;
+      }
+    } 
+    // If number doesn't start with 91, format as Indian number
+    else if (cleaned.length > 0) {
+      if (cleaned.length <= 5) {
+        formatted = `+91 ${cleaned}`;
+      } else if (cleaned.length <= 10) {
+        formatted = `+91 ${cleaned.slice(0, 5)} ${cleaned.slice(5)}`;
+      } else {
+        formatted = `+91 ${cleaned.slice(0, 5)} ${cleaned.slice(5, 10)} ${cleaned.slice(10, 15)}`;
+      }
+    }
+    
+    setFormData(prev => ({ ...prev, [name]: formatted }));
+  } else if (name === "password") {
+    // Remove spaces from password
+    const cleanedPassword = value.replace(/\s/g, '');
+    setFormData(prev => ({ ...prev, [name]: cleanedPassword }));
+  } else {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  }
+};
+
+  // Function to redirect based on user role
+  const redirectToDashboard = (userRole) => {
+    const dashboardRoutes = {
+      farmer: '/dashboard/farmer',
+      buyer: '/dashboard/buyer',
+      transport: '/dashboard/transport',
+      storage: '/dashboard/storage',
+      admin: '/dashboard',
+      default: '/dashboard'
+    };
+
+    const route = dashboardRoutes[userRole] || dashboardRoutes.default;
+    navigate(route);
   };
 
   const handleSubmit = async (e) => {
@@ -200,7 +244,12 @@ const Login = () => {
       const result = await login(formData);
       if (result.success) {
         toast.success(t.loginSuccess);
-        navigate("/dashboard");
+        
+        // Get user role from result or from AuthContext
+        const userRole = result.user?.role || 'farmer'; // Default to farmer if not specified
+        
+        // Redirect to appropriate dashboard
+        redirectToDashboard(userRole);
       }
     } catch (err) {
       console.error(err);
@@ -217,11 +266,14 @@ const Login = () => {
       // Simulate Google login success
       toast.success(t.googleSuccess);
       setLoading(false);
-      navigate("/dashboard");
+      
+      // For demo, redirect to farmer dashboard by default
+      // You can modify this based on your Google login logic
+      navigate("/dashboard/farmer");
     }, 1500);
   };
 
-  // Demo accounts for quick testing
+  // Demo accounts for quick testing - UPDATED with roles
   const demoAccounts = [
     { phone: "+91 98765 43210", password: "demo123", role: "farmer" },
     { phone: "+91 87654 32109", password: "demo123", role: "buyer" },
@@ -237,6 +289,47 @@ const Login = () => {
     toast.info(`Demo ${account.role} account filled`);
   };
 
+  // Handle demo account login directly
+  const handleDemoLogin = async (account) => {
+    setLoading(true);
+    try {
+      // Simulate login with demo account
+      const result = await login({
+        phone: account.phone,
+        password: account.password
+      });
+      
+      if (result.success) {
+        toast.success(`Demo ${account.role} login successful!`);
+        // Redirect to the specific dashboard based on demo account role
+        redirectToDashboard(account.role);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(t.invalidCredentials);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogin = async (credentials) => {
+  try {
+    const response = await authAPI.login(credentials);
+    
+    if (response.data) {
+      // Store token and user data
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      
+      // Redirect based on role
+      const role = response.data.user.role;
+      navigate(`/dashboard/${role}`);
+    }
+  } catch (error) {
+    console.error('Login failed:', error);
+  }
+};
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
@@ -248,15 +341,16 @@ const Login = () => {
           </Link>
         </p>
 
-        {/* Demo Accounts */}
+        {/* Demo Accounts - UPDATED with direct login */}
         <div className="mt-4 p-4 bg-blue-50 rounded-lg">
           <p className="text-sm text-blue-700 text-center mb-2">{t.demoAccess}</p>
           <div className="grid grid-cols-2 gap-2">
             {demoAccounts.map((account, index) => (
               <button
                 key={index}
-                onClick={() => fillDemoAccount(account)}
-                className="text-xs py-2 px-3 bg-white border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                onClick={() => handleDemoLogin(account)}
+                disabled={loading}
+                className="text-xs py-2 px-3 bg-white border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Demo {account.role}
               </button>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
+import { useVoiceRecognition } from '../hooks/UseVoiceRecognition';
 import { toast } from 'react-toastify';
 import { FcGoogle } from 'react-icons/fc';
 import { HiMicrophone, HiEye, HiEyeOff } from 'react-icons/hi';
@@ -249,174 +249,6 @@ const translations = {
 };
 
 
-const FarmerDashboard = () => {
-  const { language } = useLanguage();
-  const t = translations[language] || translations.en;
-  
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-green-600">Farmer Dashboard</h1>
-          <p className="mt-2 text-lg text-gray-600">Manage your farm produce and connect with buyers</p>
-        </div>
-        
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold text-gray-800">My Products</h3>
-            <p className="mt-2 text-gray-600">Manage your farm produce listings</p>
-            <button className="mt-4 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
-              View Products
-            </button>
-          </div>
-          
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold text-gray-800">Market Prices</h3>
-            <p className="mt-2 text-gray-600">Check current market rates</p>
-            <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-              View Prices
-            </button>
-          </div>
-          
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold text-gray-800">Buyer Requests</h3>
-            <p className="mt-2 text-gray-600">See buyer purchase requests</p>
-            <button className="mt-4 bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700">
-              View Requests
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const BuyerDashboard = () => {
-  const { language } = useLanguage();
-  const t = translations[language] || translations.en;
-  
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-blue-600">Buyer Dashboard</h1>
-          <p className="mt-2 text-lg text-gray-600">Source fresh produce directly from farmers</p>
-        </div>
-        
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold text-gray-800">Find Farmers</h3>
-            <p className="mt-2 text-gray-600">Browse farmer listings</p>
-            <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-              Browse Farmers
-            </button>
-          </div>
-          
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold text-gray-800">My Orders</h3>
-            <p className="mt-2 text-gray-600">Track your purchases</p>
-            <button className="mt-4 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
-              View Orders
-            </button>
-          </div>
-          
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold text-gray-800">Price Trends</h3>
-            <p className="mt-2 text-gray-600">Analyze market trends</p>
-            <button className="mt-4 bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700">
-              View Trends
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const TransportDashboard = () => {
-  const { language } = useLanguage();
-  const t = translations[language] || translations.en;
-  
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-orange-600">Transport Dashboard</h1>
-          <p className="mt-2 text-lg text-gray-600">Manage your logistics and transportation services</p>
-        </div>
-        
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold text-gray-800">Available Jobs</h3>
-            <p className="mt-2 text-gray-600">View transportation requests</p>
-            <button className="mt-4 bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700">
-              View Jobs
-            </button>
-          </div>
-          
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold text-gray-800">My Vehicles</h3>
-            <p className="mt-2 text-gray-600">Manage your fleet</p>
-            <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-              Manage Fleet
-            </button>
-          </div>
-          
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold text-gray-800">Earnings</h3>
-            <p className="mt-2 text-gray-600">Track your income</p>
-            <button className="mt-4 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
-              View Earnings
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const StorageDashboard = () => {
-  const { language } = useLanguage();
-  const t = translations[language] || translations.en;
-  
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-purple-600">Storage Dashboard</h1>
-          <p className="mt-2 text-lg text-gray-600">Manage your storage facilities and services</p>
-        </div>
-        
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold text-gray-800">Storage Requests</h3>
-            <p className="mt-2 text-gray-600">View storage booking requests</p>
-            <button className="mt-4 bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700">
-              View Requests
-            </button>
-          </div>
-          
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold text-gray-800">Capacity Management</h3>
-            <p className="mt-2 text-gray-600">Manage storage capacity</p>
-            <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-              Manage Capacity
-            </button>
-          </div>
-          
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold text-gray-800">Facility Details</h3>
-            <p className="mt-2 text-gray-600">Update facility information</p>
-            <button className="mt-4 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
-              Update Info
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const Register = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -500,6 +332,42 @@ const Register = () => {
     }
   };
 
+  // FIXED: Phone number input handler
+  const handlePhoneChange = (e) => {
+    const { value } = e.target;
+    
+    // Clear errors when user starts typing
+    if (formErrors.phone) {
+      setFormErrors(prev => ({ ...prev, phone: '' }));
+    }
+    
+    // Remove all non-digit characters
+    const cleaned = value.replace(/\D/g, "");
+    
+    // If empty, set empty string
+    if (cleaned === '') {
+      setFormData(prev => ({ ...prev, phone: '' }));
+      return;
+    }
+    
+    // If starts with 91 and length is 12, it's already with country code
+    if (cleaned.startsWith('91') && cleaned.length === 12) {
+      const formatted = `+${cleaned.slice(0, 2)} ${cleaned.slice(2, 7)} ${cleaned.slice(7, 12)}`;
+      setFormData(prev => ({ ...prev, phone: formatted }));
+      return;
+    }
+    
+    // If 10 digits, assume Indian number and format with +91
+    if (cleaned.length === 10) {
+      const formatted = `+91 ${cleaned.slice(0, 5)} ${cleaned.slice(5, 10)}`;
+      setFormData(prev => ({ ...prev, phone: formatted }));
+      return;
+    }
+    
+    // For partial input, just show the digits without formatting
+    setFormData(prev => ({ ...prev, phone: cleaned }));
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     
@@ -508,17 +376,13 @@ const Register = () => {
       setFormErrors(prev => ({ ...prev, [name]: '' }));
     }
     
-    // Auto-format phone number
+    // Special handling for phone input
     if (name === "phone") {
-      const cleaned = value.replace(/\D/g, "");
-      let formatted = cleaned;
-      if (cleaned.length > 0) {
-        formatted = `+91 ${cleaned.slice(0, 5)}${cleaned.length > 5 ? ' ' + cleaned.slice(5, 10) : ''}${cleaned.length > 10 ? ' ' + cleaned.slice(10, 15) : ''}`;
-      }
-      setFormData(prev => ({ ...prev, [name]: formatted }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      handlePhoneChange(e);
+      return;
     }
+    
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   // Handle password change - remove spaces
@@ -649,6 +513,23 @@ const Register = () => {
     storage: t.storageDesc
   };
 
+  // FIXED: Phone validation function
+  const validatePhone = (phone) => {
+    const phoneDigits = phone.replace(/\D/g, "");
+    
+    // Check if it's a 10-digit Indian number
+    if (phoneDigits.length === 10 && ['6','7','8','9'].includes(phoneDigits[0])) {
+      return true;
+    }
+    
+    // Check if it's a 12-digit number starting with 91 (country code)
+    if (phoneDigits.length === 12 && phoneDigits.startsWith('91') && ['6','7','8','9'].includes(phoneDigits[2])) {
+      return true;
+    }
+    
+    return false;
+  };
+
   const validateStep1 = () => {
     const errors = {};
     const { name, phone, password, confirmPassword } = formData;
@@ -661,10 +542,9 @@ const Register = () => {
     }
     
     // Phone validation
-    const phoneDigits = phone.replace(/\D/g, "");
     if (!phone.trim()) {
       errors.phone = 'Phone number is required';
-    } else if (phoneDigits.length !== 10 || !phoneDigits.startsWith('6') && !phoneDigits.startsWith('7') && !phoneDigits.startsWith('8') && !phoneDigits.startsWith('9')) {
+    } else if (!validatePhone(phone)) {
       errors.phone = 'Please enter a valid 10-digit Indian phone number';
     }
     
@@ -707,12 +587,12 @@ const Register = () => {
   };
 
   const handleNextStep = () => {
-    console.log('Next button clicked'); // Debug log
+    console.log('Next button clicked');
     if (validateStep1()) {
-      console.log('Validation passed, moving to step 2'); // Debug log
+      console.log('Validation passed, moving to step 2');
       setCurrentStep(2);
     } else {
-      console.log('Validation failed', formErrors); // Debug log
+      console.log('Validation failed', formErrors);
     }
   };
 
@@ -720,33 +600,52 @@ const Register = () => {
     setCurrentStep(1);
   };
 
+  // FIXED: Handle form submission with proper phone formatting
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted'); // Debug log
+    console.log('Form submitted');
     
     if (!validateStep2()) {
-      console.log('Step 2 validation failed'); // Debug log
+      console.log('Step 2 validation failed');
       return;
     }
 
     setLoading(true);
-    console.log('Starting registration process'); // Debug log
+    console.log('Starting registration process');
     
     try {
-      const { confirmPassword, ...registerData } = formData;
-      console.log('Registration data:', registerData); // Debug log
+      // Prepare data for registration
+      const { confirmPassword, phone, ...registerData } = formData;
       
-      const result = await register(registerData);
-      console.log('Registration result:', result); // Debug log
+      // Normalize phone number for backend
+      const phoneDigits = phone.replace(/\D/g, "");
+      let normalizedPhone;
+      
+      if (phoneDigits.length === 10) {
+        normalizedPhone = `+91${phoneDigits}`;
+      } else if (phoneDigits.length === 12 && phoneDigits.startsWith('91')) {
+        normalizedPhone = `+${phoneDigits}`;
+      } else {
+        throw new Error('Invalid phone number format');
+      }
+      
+      const finalData = {
+        ...registerData,
+        phone: normalizedPhone
+      };
+      
+      console.log('Registration data:', finalData);
+      
+      const result = await register(finalData);
+      console.log('Registration result:', result);
       
       if (result.success) {
         toast.success(t.welcomeMessage);
-        // Navigate to respective dashboard based on role
-        navigate(`/dashboard/${formData.role}`);
+        navigate('/dashboard');
       }
     } catch (error) {
       console.error('Registration error:', error);
-      toast.error(t.registrationFailed);
+      toast.error(error.message || t.registrationFailed);
     } finally {
       setLoading(false);
     }
@@ -856,6 +755,7 @@ const Register = () => {
                   )}
                 </div>
 
+                {/* FIXED: Phone Input */}
                 <div>
                   <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
                     {t.phoneNumber}
@@ -869,7 +769,7 @@ const Register = () => {
                       className={`block w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 sm:text-sm ${
                         formErrors.phone ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-green-500'
                       }`}
-                      placeholder="+91 XXXXX XXXXX"
+                      placeholder="Enter 10-digit phone number"
                       value={formData.phone}
                       onChange={handleChange}
                       maxLength={17}
@@ -881,7 +781,9 @@ const Register = () => {
                   {formErrors.phone ? (
                     <p className="mt-1 text-sm text-red-600">{formErrors.phone}</p>
                   ) : (
-                    <p className="text-xs text-gray-500 mt-1">{t.phoneDescription}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {t.phoneDescription} (Format: +91 XXXXX XXXXX or 10 digits)
+                    </p>
                   )}
                 </div>
 
@@ -1228,6 +1130,4 @@ const Register = () => {
   );
 };
 
-export { FarmerDashboard, BuyerDashboard, TransportDashboard, StorageDashboard };
 export default Register;
-

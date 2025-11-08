@@ -9,7 +9,7 @@ const postSchema = new mongoose.Schema({
   },
   userType: {
     type: String,
-    enum: ['farmer', 'buyer', 'transporter', 'storage'],
+    enum: ['farmer', 'buyer', 'transport', 'storage'],
     required: true
   },
   type: {

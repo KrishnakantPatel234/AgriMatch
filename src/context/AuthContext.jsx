@@ -11,50 +11,6 @@ export const useAuth = () => {
   return context;
 };
 
-// Demo data for different user roles
-const demoUserData = {
-  farmer: {
-    farmSize: '4 acres',
-    location: 'Nashik, Maharashtra',
-    soilType: 'Black cotton soil',
-    experience: '8 years',
-    crops: ['Tomatoes', 'Potatoes', 'Spinach'],
-    equipment: ['Tractor', 'Drip irrigation', 'Sprayer'],
-    rating: 4.8,
-    totalSales: '₹2,45,600',
-    monthlyRevenue: '₹45,600'
-  },
-  buyer: {
-    businessName: 'FreshMart Supermarket',
-    businessType: 'Retail Chain',
-    location: 'Pune, Maharashtra',
-    purchaseVolume: '2-5 tons weekly',
-    preferredProducts: ['Vegetables', 'Fruits', 'Grains'],
-    rating: 4.9,
-    totalOrders: 156,
-    monthlySpending: '₹3,20,000'
-  },
-  transport: {
-    companyName: 'Swift Agri Logistics',
-    vehicleTypes: ['Truck', 'Tempo', 'Refrigerated Van'],
-    serviceAreas: ['Maharashtra', 'Gujarat', 'Madhya Pradesh'],
-    capacity: '5-10 tons per vehicle',
-    rating: 4.7,
-    totalDeliveries: 289,
-    deliverySuccessRate: '98.5%'
-  },
-  storage: {
-    storageName: 'CoolStore Facilities',
-    capacity: '500 tons',
-    storageTypes: ['Cold Storage', 'Warehouse', 'Controlled Atmosphere'],
-    locations: ['Nashik', 'Pune', 'Nagpur'],
-    services: ['Short-term', 'Long-term', 'Value-added'],
-    rating: 4.6,
-    occupancyRate: '85%',
-    totalClients: 67
-  }
-};
-
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -65,226 +21,254 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = async () => {
     try {
-      const userData = localStorage.getItem('agrimatch_user');
-      if (userData) {
-        setUser(JSON.parse(userData));
+      const token = localStorage.getItem('token');
+      const userData = localStorage.getItem('user');
+      
+      if (token && userData) {
+        const parsedUser = JSON.parse(userData);
+        
+        // Validate token with backend (optional but recommended)
+        try {
+          // Uncomment when you have backend API
+          // const Api = await import('../services/Api');
+          // const response = await Api.authAPI.validateToken(token);
+          // setUser(response.data.user);
+          
+          // For now, use stored user data
+          setUser(parsedUser);
+        } catch (error) {
+          console.error('Token validation failed:', error);
+          logout();
+        }
       }
     } catch (error) {
       console.error('Auth check error:', error);
-      localStorage.removeItem('agrimatch_user');
+      logout();
     } finally {
       setLoading(false);
     }
   };
 
-  const login = async (credentials) => {
+  const normalizePhone = (input) => {
+    if (!input) return '';
+    const digits = String(input).replace(/\D/g, '');
+    
+    // If already has country code 91 at start and length 12 -> use +91XXXXXXXXXX
+    if (digits.length === 12 && digits.startsWith('91')) return `+${digits}`;
+    // If 10 digits, assume India
+    if (digits.length === 10) return `+91${digits}`;
+    // Fallback to original with plus if missing
+    return digits ? `+${digits}` : '';
+  };
+
+  const validateCredentials = (credentials, language = 'en') => {
+    const { email, phone, password } = credentials;
+    
+    if (!password || password.length < 6) {
+      throw new Error(getErrorMessage('passwordLength', language));
+    }
+
+    if (!email && !phone) {
+      throw new Error(getErrorMessage('fillAllFields', language));
+    }
+
+    if (email && !/\S+@\S+\.\S+/.test(email)) {
+      throw new Error(getErrorMessage('invalidEmail', language));
+    }
+
+    if (phone) {
+      const normalizedPhone = normalizePhone(phone);
+      if (normalizedPhone.length < 10) {
+        throw new Error(getErrorMessage('invalidPhone', language));
+      }
+    }
+
+    return true;
+  };
+
+  const login = async (credentials, language = 'en') => {
     try {
-      // Simulate API call - replace with actual backend integration
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setLoading(true);
       
-      // Demo validation - replace with actual authentication
-      if (!credentials.email || !credentials.password) {
-        throw new Error('Please fill in all fields');
+      // Validate credentials
+      validateCredentials(credentials, language);
+      
+      // Prepare payload
+      const phone = credentials.phone ? normalizePhone(credentials.phone) : undefined;
+      const payload = credentials.email 
+        ? { email: credentials.email, password: credentials.password }
+        : { phone, password: credentials.password };
+
+      try {
+        // Call backend API
+        const Api = await import('../services/Api');
+        const response = await Api.authAPI.login(payload);
+        const { token, user: apiUser } = response.data;
+        
+        // Store auth data
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(apiUser));
+        setUser(apiUser);
+        
+        toast.success(getSuccessMessage('loginSuccess', language));
+        return { success: true, user: apiUser };
+      } catch (apiError) {
+        // Handle API errors
+        const errorMessage = apiError.response?.data?.message || apiError.message || getErrorMessage('loginFailed', language);
+        throw new Error(errorMessage);
       }
 
-      // Demo accounts for testing
-      const demoAccounts = {
-        'farmer@agrimatch.com': { password: 'demo123', role: 'farmer', name: 'Rajesh Kumar' },
-        'buyer@agrimatch.com': { password: 'demo123', role: 'buyer', name: 'FreshMart Stores' },
-        'transport@agrimatch.com': { password: 'demo123', role: 'transport', name: 'Swift Logistics' },
-        'storage@agrimatch.com': { password: 'demo123', role: 'storage', name: 'CoolStore Facilities' }
-      };
-
-      // Check if it's a demo account
-      const demoAccount = demoAccounts[credentials.email];
-      if (demoAccount && credentials.password === demoAccount.password) {
-        const userData = createUserData(demoAccount.role, demoAccount.name, credentials.email);
-        localStorage.setItem('agrimatch_user', JSON.stringify(userData));
-        setUser(userData);
-        toast.success(`Welcome back, ${demoAccount.name}!`);
-        return { success: true, user: userData };
-      }
-
-      // Regular login - create user based on email
-      const role = determineRoleFromEmail(credentials.email);
-      const name = credentials.email.split('@')[0];
-      const userData = createUserData(role, name, credentials.email);
-
-      localStorage.setItem('agrimatch_user', JSON.stringify(userData));
-      setUser(userData);
-      
-      toast.success('Login successful!');
-      return { success: true, user: userData };
     } catch (error) {
-      toast.error(error.message || 'Login failed');
+      console.error('Login error:', error);
+      toast.error(error.message);
       return { success: false, message: error.message };
+    } finally {
+      setLoading(false);
     }
   };
 
-  const register = async (userData) => {
+  const register = async (userData, language = 'en') => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setLoading(true);
       
       // Validation
-      if (!userData.name || !userData.email || !userData.password) {
-        throw new Error('Please fill in all required fields');
+      if (!userData.name || !userData.password) {
+        throw new Error(getErrorMessage('fillAllFields', language));
       }
 
       if (userData.password.length < 6) {
-        throw new Error('Password must be at least 6 characters');
+        throw new Error(getErrorMessage('passwordLength', language));
       }
 
-      // Create user with role-specific data
-      const newUser = createUserData(
-        userData.role || 'buyer', 
-        userData.name, 
-        userData.email, 
-        userData.phone
-      );
+      // Prepare payload
+      const phone = userData.phone ? normalizePhone(userData.phone) : undefined;
+      const payload = {
+        name: userData.name.trim(),
+        email: userData.email?.trim() || undefined,
+        phone: phone,
+        password: userData.password,
+        role: userData.role || 'farmer',
+      };
 
-      localStorage.setItem('agrimatch_user', JSON.stringify(newUser));
-      setUser(newUser);
-      
-      toast.success(`Registration successful! Welcome to AgriMatch, ${userData.name}!`);
-      return { success: true, user: newUser };
+      try {
+        // Call backend API
+        const Api = await import('../services/Api');
+        const response = await Api.authAPI.register(payload);
+        const { token, user: newUser } = response.data;
+        
+        // Store auth data
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(newUser));
+        setUser(newUser);
+        
+        const successMessage = getSuccessMessage('registrationSuccess', language).replace('{name}', userData.name);
+        toast.success(successMessage);
+        return { success: true, user: newUser };
+      } catch (apiError) {
+        const errorMessage = apiError.response?.data?.message || apiError.message || getErrorMessage('registrationFailed', language);
+        throw new Error(errorMessage);
+      }
+
     } catch (error) {
-      toast.error(error.message || 'Registration failed');
+      console.error('Registration error:', error);
+      toast.error(error.message);
       return { success: false, message: error.message };
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Helper function to create user data with role-specific information
-  const createUserData = (role, name, email, phone = '') => {
-    const baseUser = {
-      id: Date.now(),
-      name: name,
-      email: email,
-      phone: phone,
-      role: role,
-      profilePicture: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=10B981&color=fff`,
-      joinedDate: new Date().toISOString(),
-      isVerified: true,
-      lastLogin: new Date().toISOString()
-    };
-
-    // Add role-specific data
-    const roleData = demoUserData[role] || {};
-    
-    return {
-      ...baseUser,
-      ...roleData,
-      // Add additional role-specific fields
-      stats: generateRoleStats(role),
-      preferences: generateRolePreferences(role)
-    };
-  };
-
-  // Helper function to determine role from email (for demo purposes)
-  const determineRoleFromEmail = (email) => {
-    if (email.includes('farmer')) return 'farmer';
-    if (email.includes('buyer')) return 'buyer';
-    if (email.includes('transport')) return 'transport';
-    if (email.includes('storage')) return 'storage';
-    return 'farmer'; // default role
-  };
-
-  // Generate role-specific statistics
-  const generateRoleStats = (role) => {
-    const stats = {
-      farmer: {
-        activeCrops: 3,
-        totalHarvest: '45 tons',
-        successRate: '92%',
-        buyersConnected: 24
-      },
-      buyer: {
-        activeSuppliers: 15,
-        ordersThisMonth: 23,
-        fulfillmentRate: '96%',
-        favoriteFarmers: 8
-      },
-      transport: {
-        activeVehicles: 6,
-        onTimeDelivery: '94%',
-        distanceCovered: '12,456 km',
-        happyClients: 89
-      },
-      storage: {
-        availableCapacity: '75 tons',
-        temperatureZones: 4,
-        securityLevel: 'High',
-        clientSatisfaction: '95%'
-      }
-    };
-    return stats[role] || {};
-  };
-
-  // Generate role-specific preferences
-  const generateRolePreferences = (role) => {
-    const preferences = {
-      farmer: {
-        preferredBuyers: ['Organic stores', 'Export companies'],
-        communication: ['In-app messaging', 'Phone calls'],
-        payment: ['UPI', 'Bank transfer'],
-        notifications: ['Price alerts', 'Weather updates']
-      },
-      buyer: {
-        productQuality: ['Organic', 'Fresh harvest'],
-        delivery: ['Next day', 'Scheduled'],
-        payment: ['Credit terms', 'UPI'],
-        notifications: ['New farmers', 'Price drops']
-      },
-      transport: {
-        vehiclePreference: ['Refrigerated', 'Large capacity'],
-        routes: ['Highway preferred', 'Toll roads okay'],
-        payment: ['Per trip', 'Monthly contract'],
-        notifications: ['New bookings', 'Route changes']
-      },
-      storage: {
-        storageType: ['Temperature controlled', 'Humidity controlled'],
-        clients: ['Farmers', 'Exporters'],
-        payment: ['Monthly', 'Per pallet'],
-        notifications: ['Capacity alerts', 'Maintenance']
-      }
-    };
-    return preferences[role] || {};
-  };
-
   const logout = () => {
-    localStorage.removeItem('agrimatch_user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
-    toast.info('Logged out successfully');
-    // Optional: Redirect to home page
-    window.location.href = '/';
+    toast.info(getSuccessMessage('logoutSuccess', 'en'));
   };
 
   const updateUser = (updatedUser) => {
-    const newUserData = { ...user, ...updatedUser };
-    setUser(newUserData);
-    localStorage.setItem('agrimatch_user', JSON.stringify(newUserData));
-    toast.success('Profile updated successfully!');
+    try {
+      const newUserData = { ...user, ...updatedUser };
+      setUser(newUserData);
+      localStorage.setItem('user', JSON.stringify(newUserData));
+      toast.success('Profile updated successfully!');
+    } catch (error) {
+      console.error('Update user error:', error);
+      toast.error('Failed to update profile');
+    }
   };
 
-  // New function to update user preferences
   const updatePreferences = (newPreferences) => {
-    const updatedUser = {
-      ...user,
-      preferences: { ...user.preferences, ...newPreferences }
-    };
-    setUser(updatedUser);
-    localStorage.setItem('agrimatch_user', JSON.stringify(updatedUser));
-    toast.success('Preferences updated!');
+    try {
+      const updatedUser = {
+        ...user,
+        preferences: { ...user?.preferences, ...newPreferences }
+      };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      toast.success('Preferences updated!');
+    } catch (error) {
+      console.error('Update preferences error:', error);
+      toast.error('Failed to update preferences');
+    }
   };
 
-  // New function to update user stats
-  const updateStats = (newStats) => {
-    const updatedUser = {
-      ...user,
-      stats: { ...user.stats, ...newStats }
+  // Multilingual error messages
+  const getErrorMessage = (key, language = 'en') => {
+    const messages = {
+      fillAllFields: {
+        en: 'Please fill in all required fields',
+        hi: 'कृपया सभी आवश्यक फ़ील्ड भरें',
+        mr: 'कृपया सर्व आवश्यक फील्ड भरा'
+      },
+      passwordLength: {
+        en: 'Password must be at least 6 characters long',
+        hi: 'पासवर्ड कम से कम 6 अक्षर लंबा होना चाहिए',
+        mr: 'पासवर्ड किमान ६ वर्ण लांब असणे आवश्यक आहे'
+      },
+      invalidEmail: {
+        en: 'Please enter a valid email address',
+        hi: 'कृपया एक वैध ईमेल पता दर्ज करें',
+        mr: 'कृपया एक वैध ईमेल पत्ता प्रविष्ट करा'
+      },
+      invalidPhone: {
+        en: 'Please enter a valid phone number',
+        hi: 'कृपया एक वैध फोन नंबर दर्ज करें',
+        mr: 'कृपया एक वैध फोन नंबर प्रविष्ट करा'
+      },
+      loginFailed: {
+        en: 'Login failed. Please check your credentials.',
+        hi: 'लॉगिन विफल। कृपया अपनी साख जांचें।',
+        mr: 'लॉगिन अयशस्वी. कृपया आपली सत्यापन तपासा.'
+      },
+      registrationFailed: {
+        en: 'Registration failed. Please try again.',
+        hi: 'पंजीकरण विफल। कृपया पुनः प्रयास करें।',
+        mr: 'नोंदणी अयशस्वी. कृपया पुन्हा प्रयत्न करा.'
+      }
     };
-    setUser(updatedUser);
-    localStorage.setItem('agrimatch_user', JSON.stringify(updatedUser));
+    return messages[key]?.[language] || messages[key]?.en || key;
+  };
+
+  // Multilingual success messages
+  const getSuccessMessage = (key, language = 'en') => {
+    const messages = {
+      loginSuccess: {
+        en: 'Login successful!',
+        hi: 'लॉगिन सफल!',
+        mr: 'लॉगिन यशस्वी!'
+      },
+      registrationSuccess: {
+        en: 'Registration successful! Welcome to AgriMatch, {name}!',
+        hi: 'पंजीकरण सफल! AgriMatch में आपका स्वागत है, {name}!',
+        mr: 'नोंदणी यशस्वी! AgriMatch मध्ये आपले स्वागत आहे, {name}!'
+      },
+      logoutSuccess: {
+        en: 'Logged out successfully',
+        hi: 'सफलतापूर्वक लॉग आउट हो गया',
+        mr: 'यशस्वीरित्या लॉग आउट झाले'
+      }
+    };
+    return messages[key]?.[language] || messages[key]?.en || key;
   };
 
   const value = {
@@ -294,8 +278,8 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateUser,
     updatePreferences,
-    updateStats,
-    loading
+    loading,
+    isAuthenticated: !!user
   };
 
   return (

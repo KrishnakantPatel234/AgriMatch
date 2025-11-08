@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import VoiceForm from './VoiceForm';
-import axios from 'axios';
+import { postsAPI } from '../services/Api';
 
 const VoicePostCreator = ({ onPostCreated }) => {
   const { user } = useAuth();
@@ -58,16 +58,16 @@ const VoicePostCreator = ({ onPostCreated }) => {
 
   const handlePostSubmit = async (formData) => {
     try {
-      const postData = {
-        userId: user._id,
-        userType: user.userType,
-        type: user.userType,
-        ...formData
-      };
+    const role = (user?.role || user?.userType || '').toLowerCase();
+    const postData = {
+      userType: role,
+      type: role,
+      ...formData
+    };
 
-      const response = await axios.post('http://localhost:5000/api/posts', postData);
+      const response = await postsAPI.create(postData);
       
-      if (response.data.success) {
+      if (response.data?.success) {
         alert('आपकी पोस्ट सफलतापूर्वक बनाई गई! | Post created successfully!');
         setShowCreator(false);
         onPostCreated?.();

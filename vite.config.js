@@ -9,11 +9,16 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/auth': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:5000', // Your backend port
         changeOrigin: true,
+        secure: false,
       },
       '/api': {
         target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+      '/ai': {
+        target: 'http://localhost:8000',
         changeOrigin: true,
       }
     }

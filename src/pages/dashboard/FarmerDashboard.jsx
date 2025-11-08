@@ -2,11 +2,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { useVoiceRecognition } from '../../hooks/useVoiceRecognition';
+import { useVoiceRecognition } from '../../hooks/UseVoiceRecognition';
 import { toast } from 'react-toastify';
 import { FaMicrophone, FaStop, FaUpload, FaDownload, FaShare, FaSync } from 'react-icons/fa';
 import Navbar from "../../components/Navbar";
-import Footer from "../../components/Footer"
+import Footer from "../../components/Footer";
+import PostsFeed from "../../components/PostsFeed";
+import VoicePostCreator from "../../components/VoicePostCreator";
+import { aiAPI } from "../../services/Api"
 
 const FarmerDashboard = () => {
   const { user } = useAuth();
@@ -298,51 +301,44 @@ const FarmerDashboard = () => {
     voiceRecognition.stopListening();
   };
 
-  // Simulate AI Analysis
-  const analyzeCropImage = (image) => {
+  // AI Analysis via backend (with fallback handled server-side)
+  const analyzeCropImage = async (image) => {
     setIsAnalyzing(true);
-    toast.info(language === 'hi' ? 'आपकी फसल छवि का AI विश्लेषण कर रहा है...' : 
-               language === 'mr' ? 'तुमच्या पिक प्रतिमेचे AI विश्लेषण करत आहे...' :
-               'AI is analyzing your crop image...');
-    
-    setTimeout(() => {
-      const results = {
-        en: [
-          { health: 'Good', issues: 'Minor nutrient deficiency detected', recommendation: 'Apply balanced NPK fertilizer', confidence: 87 },
-          { health: 'Excellent', issues: 'No significant issues found', recommendation: 'Continue current practices', confidence: 92 },
-          { health: 'Needs Attention', issues: 'Early signs of fungal infection', recommendation: 'Apply fungicide and improve drainage', confidence: 78 }
-        ],
-        hi: [
-          { health: 'अच्छा', issues: 'मामूली पोषक तत्व की कमी का पता चला', recommendation: 'संतुलित NPK उर्वरक लगाएं', confidence: 87 },
-          { health: 'उत्कृष्ट', issues: 'कोई महत्वपूर्ण समस्या नहीं मिली', recommendation: 'वर्तमान प्रथाएं जारी रखें', confidence: 92 },
-          { health: 'ध्यान देने की आवश्यकता', issues: 'फंगल संक्रमण के शुरुआती लक्षण', recommendation: 'फफूंदनाशक लगाएं और जल निकासी में सुधार करें', confidence: 78 }
-        ],
-        mr: [
-          { health: 'चांगले', issues: 'किरकोळ पोषक तुटपुंजे आढळले', recommendation: 'संतुलित NPK खत लावा', confidence: 87 },
-          { health: 'उत्तम', issues: 'काही महत्वाच्या समस्या आढळल्या नाहीत', recommendation: 'सध्याच्या पद्धती चालू ठेवा', confidence: 92 },
-          { health: 'लक्ष देणे आवश्यक', issues: 'बुरशीजन्य संसर्गाची लक्षणे', recommendation: 'फंगिसायड लावा आणि ड्रेनेज सुधारा', confidence: 78 }
-        ]
-      };
-
-      const langResults = results[language] || results.en;
-      const result = langResults[Math.floor(Math.random() * langResults.length)];
-      
-      const analysisMessage = language === 'hi' 
-        ? `🔍 विश्लेषण पूरा!\nस्वास्थ्य: ${result.health}\nसमस्याएं: ${result.issues}\nसिफारिश: ${result.recommendation}\nविश्वास: ${result.confidence}%`
+    toast.info(
+      language === 'hi'
+        ? 'आपकी फसल छवि का AI विश्लेषण कर रहा है...'
         : language === 'mr'
-        ? `🔍 विश्लेषण पूर्ण!\nआरोग्य: ${result.health}\nसमस्या: ${result.issues}\nशिफारस: ${result.recommendation}\nआत्मविश्वास: ${result.confidence}%`
-        : `🔍 Analysis Complete!\nHealth: ${result.health}\nIssues: ${result.issues}\nRecommendation: ${result.recommendation}\nConfidence: ${result.confidence}%`;
-      
-      setChatHistory(prev => [...prev, 
+        ? 'तुमच्या पिक प्रतिमेचे AI विश्लेषण करत आहे...'
+        : 'AI is analyzing your crop image...'
+    );
+
+    try {
+      const { data } = await aiAPI.analyzeImage({ image, language });
+      const msg = data?.message || 'Analysis complete';
+      setChatHistory((prev) => [
+        ...prev,
         { type: 'user', message: `📸 Uploaded crop image for analysis` },
-        { type: 'ai', message: analysisMessage }
+        { type: 'ai', message: msg },
       ]);
-      
+      toast.success(
+        language === 'hi'
+          ? 'फसल विश्लेषण पूरा हुआ!'
+          : language === 'mr'
+          ? 'पिक विश्लेषण पूर्ण झाले!'
+          : 'Crop analysis completed!'
+      );
+    } catch (err) {
+      console.error('AI analysis error', err);
+      toast.error(
+        language === 'hi'
+          ? 'AI विश्लेषण विफल। कृपया बाद में पुनः प्रयास करें।'
+          : language === 'mr'
+          ? 'AI विश्लेषण अयशस्वी. कृपया नंतर पुन्हा प्रयत्न करा.'
+          : 'AI analysis failed. Please try again later.'
+      );
+    } finally {
       setIsAnalyzing(false);
-      toast.success(language === 'hi' ? 'फसल विश्लेषण पूरा हुआ!' : 
-                   language === 'mr' ? 'पिक विश्लेषण पूर्ण झाले!' :
-                   'Crop analysis completed!');
-    }, 3000);
+    }
   };
 
   // Handle AI Chat
@@ -733,7 +729,17 @@ const FarmerDashboard = () => {
             </button>
           </form>
         </div>
+
+        {/* Posts Section */}
+        <div className="mt-8">
+          <h3 className="text-2xl font-semibold mb-4 flex items-center">
+            <span className="text-green-600 mr-2">📝</span>
+            {language === 'hi' ? 'किसानों की पोस्ट' : language === 'mr' ? 'शेतकऱ्यांच्या पोस्ट' : 'Farmers Posts'}
+          </h3>
+          <PostsFeed userType="farmer" />
+        </div>
       </div>
+      <VoicePostCreator onPostCreated={() => { /* refresh handled inside feed by remount if needed */ }} />
       <Footer />
     </div>
   );

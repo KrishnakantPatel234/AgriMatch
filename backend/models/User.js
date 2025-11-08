@@ -11,8 +11,8 @@ const userSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    required: [true, 'Please provide an email'],
     unique: true,
+    sparse: true,
     lowercase: true,
     validate: [validator.isEmail, 'Please provide a valid email']
   },
@@ -24,13 +24,16 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['farmer', 'buyer', 'admin'],
+    enum: ['farmer', 'buyer', 'transport', 'storage', 'admin'],
     default: 'buyer'
   },
   phone: {
     type: String,
+    unique: true,
+    sparse: true,
     validate: {
       validator: function(v) {
+        if (!v) return true;
         return /^\+?[\d\s\-\(\)]{10,}$/.test(v);
       },
       message: 'Please provide a valid phone number'

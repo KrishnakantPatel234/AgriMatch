@@ -1,10 +1,13 @@
 // components/VoiceNavigator.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 
 const VoiceNavigator = () => {
   const [isListening, setIsListening] = useState(false);
   const navigate = useNavigate();
+  const { language } = useLanguage();
+  const getLangCode = (lang) => ({ en: 'en-US', hi: 'hi-IN', mr: 'mr-IN' }[lang] || 'en-US');
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -14,7 +17,7 @@ const VoiceNavigator = () => {
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = false;
-    recognition.lang = 'hi-IN';
+    recognition.lang = getLangCode(language);
 
     recognition.onresult = (event) => {
       const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
@@ -34,10 +37,16 @@ const VoiceNavigator = () => {
     return () => {
       recognition.stop();
     };
-  }, [isListening]);
+  }, [isListening, language]);
+
+  const clickPrimarySubmit = () => {
+    const submit = document.querySelector('button[type="submit"], .btn-primary, [data-primary="true"]');
+    submit?.click();
+  };
 
   const handleVoiceCommand = (command) => {
-    console.log('Voice command:', command);
+    const cmd = command.toLowerCase();
+    console.log('Voice command:', cmd);
     
     // Navigation commands
     if (command.includes('home') || command.includes('घर')) {
@@ -60,15 +69,25 @@ const VoiceNavigator = () => {
       navigate('/cold-storage');
       speakFeedback('कोल्ड स्टोरेज दिखा रहा हूं');
     }
-    else if (command.includes('login') || command.includes('लॉगिन')) {
+    else if (cmd.includes('login') || cmd.includes('लॉगिन') || cmd.includes('sign in')) {
       navigate('/login');
       speakFeedback('लॉगिन पेज खोल रहा हूं');
     }
-    else if (command.includes('signup') || command.includes('साइन अप')) {
+    else if (cmd.includes('signup') || cmd.includes('साइन अप') || cmd.includes('register')) {
       navigate('/signup');
       speakFeedback('साइन अप पेज खोल रहा हूं');
     }
-    else if (command.includes('help') || command.includes('मदद')) {
+    else if (cmd.includes('submit') || cmd.includes('जमा') || cmd.includes('भेजो')) {
+      clickPrimarySubmit();
+      speakFeedback('फॉर्म सबमिट कर रहा हूं');
+    }
+    else if (cmd.includes('logout') || cmd.includes('लॉग आउट')) {
+      const logoutBtn = Array.from(document.querySelectorAll('button, a'))
+        .find(el => /logout|लॉग आउट/i.test(el.textContent || ''));
+      logoutBtn?.click();
+      speakFeedback('लॉग आउट कर रहा हूं');
+    }
+    else if (cmd.includes('help') || cmd.includes('मदद')) {
       speakHelp();
     }
   };
@@ -76,7 +95,7 @@ const VoiceNavigator = () => {
   const speakFeedback = (text) => {
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'hi-IN';
+      utterance.lang = getLangCode(language);
       speechSynthesis.speak(utterance);
     }
   };

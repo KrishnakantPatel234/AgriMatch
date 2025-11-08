@@ -29,7 +29,7 @@ const ColdStorageDirectory = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      < Navbar />  
+        
       {/* Hero Section */}
       <div className="bg-cyan-600 text-white py-20">
         <div className="container mx-auto px-4 text-center">
@@ -148,7 +148,7 @@ const ColdStorageDirectory = () => {
           })}
         </div>
       </div>
-      <Footer />
+      
     </div>
   );
 };
