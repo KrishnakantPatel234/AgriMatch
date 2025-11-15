@@ -1,6 +1,6 @@
-// components/Footer.js
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   const { t } = useLanguage();
@@ -10,66 +10,49 @@ const Footer = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
-          <div className="lg:col-span-1">
-            <div className="flex items-center mb-4">
-              <span className="text-2xl text-green-400">🌱</span>
-              <span className="ml-2 text-xl font-bold">AgriMatch</span>
-            </div>
+          <div className="lg:col-span-2">
+            <h3 className="text-2xl font-bold text-green-400 mb-4">AgriMatch</h3>
             <p className="text-gray-300 mb-4 leading-relaxed">
               {t('footer.description')}
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-300 hover:text-green-400 transition duration-300">
-                <span className="text-xl">📘</span>
+              <a href="#" className="text-gray-300 hover:text-green-400 transition duration-200">
+                <i className="fab fa-facebook text-xl"></i>
               </a>
-              <a href="#" className="text-gray-300 hover:text-green-400 transition duration-300">
-                <span className="text-xl">🐦</span>
+              <a href="#" className="text-gray-300 hover:text-green-400 transition duration-200">
+                <i className="fab fa-twitter text-xl"></i>
               </a>
-              <a href="#" className="text-gray-300 hover:text-green-400 transition duration-300">
-                <span className="text-xl">📷</span>
+              <a href="#" className="text-gray-300 hover:text-green-400 transition duration-200">
+                <i className="fab fa-instagram text-xl"></i>
+              </a>
+              <a href="#" className="text-gray-300 hover:text-green-400 transition duration-200">
+                <i className="fab fa-linkedin text-xl"></i>
               </a>
             </div>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">{t('footer.quickLinks')}</h3>
+            <h4 className="text-lg font-semibold mb-4">{t('footer.quickLinks')}</h4>
             <ul className="space-y-2">
-              <li><a href="#farmers" className="text-gray-300 hover:text-green-400 transition duration-300">{t('nav.farmers')}</a></li>
-              <li><a href="#buyers" className="text-gray-300 hover:text-green-400 transition duration-300">{t('nav.buyers')}</a></li>
-              <li><a href="#transport" className="text-gray-300 hover:text-green-400 transition duration-300">{t('nav.transport')}</a></li>
-              <li><a href="#cold-storage" className="text-gray-300 hover:text-green-400 transition duration-300">{t('nav.coldStorage')}</a></li>
+              <li><Link to="/" className="text-gray-300 hover:text-green-400 transition duration-200">{t('footer.home')}</Link></li>
+              <li><Link to="/farmers" className="text-gray-300 hover:text-green-400 transition duration-200">{t('footer.farmers')}</Link></li>
+              <li><Link to="/buyers" className="text-gray-300 hover:text-green-400 transition duration-200">{t('footer.buyers')}</Link></li>
+              <li><Link to="/transport" className="text-gray-300 hover:text-green-400 transition duration-200">{t('footer.transport')}</Link></li>
+              <li><Link to="/storage" className="text-gray-300 hover:text-green-400 transition duration-200">{t('footer.storage')}</Link></li>
             </ul>
           </div>
 
           {/* Support */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">{t('footer.support')}</h3>
+            <h4 className="text-lg font-semibold mb-4">{t('footer.support')}</h4>
             <ul className="space-y-2">
-              <li><a href="#" className="text-gray-300 hover:text-green-400 transition duration-300">Help Center</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-green-400 transition duration-300">{t('footer.contact')}</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-green-400 transition duration-300">Privacy Policy</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-green-400 transition duration-300">Terms of Service</a></li>
+              <li><a href="#" className="text-gray-300 hover:text-green-400 transition duration-200">{t('footer.help')}</a></li>
+              <li><a href="#" className="text-gray-300 hover:text-green-400 transition duration-200">{t('footer.contact')}</a></li>
+              <li><a href="#" className="text-gray-300 hover:text-green-400 transition duration-200">{t('footer.privacy')}</a></li>
+              <li><a href="#" className="text-gray-300 hover:text-green-400 transition duration-200">{t('footer.terms')}</a></li>
+              <li><a href="#" className="text-gray-300 hover:text-green-400 transition duration-200">{t('footer.faq')}</a></li>
             </ul>
-          </div>
-
-          {/* Contact Info */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">{t('footer.contact')}</h3>
-            <div className="space-y-2 text-gray-300">
-              <div className="flex items-center">
-                <span className="mr-2">📧</span>
-                <span>support@agrimatch.com</span>
-              </div>
-              <div className="flex items-center">
-                <span className="mr-2">📞</span>
-                <span>+91 1800-AGR-HELP</span>
-              </div>
-              <div className="flex items-center">
-                <span className="mr-2">📍</span>
-                <span>Hyderabad, Telangana, India</span>
-              </div>
-            </div>
           </div>
         </div>
 

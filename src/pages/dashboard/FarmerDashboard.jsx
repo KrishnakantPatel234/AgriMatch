@@ -1,745 +1,572 @@
-// pages/dashboard/FarmerDashboard.js
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useVoiceRecognition } from '../../hooks/UseVoiceRecognition';
 import { toast } from 'react-toastify';
-import { FaMicrophone, FaStop, FaUpload, FaDownload, FaShare, FaSync } from 'react-icons/fa';
+import { FaMicrophone, FaStop, FaUpload, FaPlus, FaSync } from 'react-icons/fa';
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import PostsFeed from "../../components/PostsFeed";
 import VoicePostCreator from "../../components/VoicePostCreator";
-import { aiAPI } from "../../services/Api"
+import PlantixDiagnosis from "../../components/PlantixDiagnosis";
+import axios from "axios";
+import PostCard from "../../components/PostCard";
+import FarmerPostCard from "../../components/FarmerPostCard";
+
 
 const FarmerDashboard = () => {
   const { user } = useAuth();
   const { t, language } = useLanguage();
+  const { startVoice } = useVoiceRecognition(); 
   const [activeTab, setActiveTab] = useState('overview');
-  const [chatMessage, setChatMessage] = useState('');
-  const [chatHistory, setChatHistory] = useState([]);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [uploadedImage, setUploadedImage] = useState(null);
-  const [isListening, setIsListening] = useState(false);
-  const chatContainerRef = useRef(null);
+  const [farmData, setFarmData] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showPostCreator, setShowPostCreator] = useState(false);
+  // CHAT SYSTEM STATES
+  const [chatWith, setChatWith] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [typing, setTyping] = useState(false);
 
-  // Voice recognition hook
-  const getLanguageCode = (lang) => {
-    const codes = { en: 'en-US', hi: 'hi-IN', mr: 'mr-IN' };
-    return codes[lang] || 'en-US';
-  };
+  const [realTimeStats, setRealTimeStats] = useState({
+    activeCrops: 0,
+    monthlyRevenue: 0,
+    buyerRating: 0,
+    growthRate: 0
+  });
 
-  const voiceRecognition = useVoiceRecognition(getLanguageCode(language));
+  // Fetch farmer data from backend
+  const fetchFarmData = async () => {
+  try {
+    setLoading(true);
 
-  // Multilingual content
+    const token = localStorage.getItem("token");
+
+    const response = await axios.get(
+      `http://localhost:5000/api/users/${user._id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+
+    setFarmData(response.data.user || response.data);
+
+    // Stats fallback
+    setRealTimeStats({
+      activeCrops: response.data.user?.mainCrops?.length || 0,
+      monthlyRevenue: response.data.user?.stats?.monthlyRevenue || 0,
+      buyerRating: response.data.user?.rating || 4.5,
+      growthRate: 0
+    });
+
+  } catch (error) {
+    console.error("Error fetching farm data:", error);
+    toast.error("Failed to load farm data");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  // Fetch farmer's posts
+  const fetchPosts = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.get(
+      `http://localhost:5000/api/posts/farmer/${user._id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+
+    setPosts(response.data.posts || []);
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+  }
+};
+
+
+  useEffect(() => {
+    if (user) {
+      fetchFarmData();
+      fetchPosts();
+    }
+  }, [user]);
+
+  // Real-time updates (simulated with interval)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Update stats in real-time
+      setRealTimeStats(prev => ({
+        ...prev,
+        monthlyRevenue: prev.monthlyRevenue + Math.random() * 100,
+        growthRate: prev.growthRate + Math.random() * 0.1
+      }));
+    }, 30000); // Update every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Dashboard content translations
   const dashboardContent = {
     en: {
       welcome: "Welcome back",
       farmerDashboard: "Farmer Dashboard",
-      aiAssistantActive: "AI Farming Assistant Active",
       realTimeInsights: "Real-time insights to maximize your yield and profits",
       activeCrops: "Active Crops",
       monthlyRevenue: "Monthly Revenue",
       buyerRating: "Buyer Rating",
       growthRate: "Growth Rate",
-      yourCurrentCrops: "Your Current Crops",
-      area: "Area",
-      stage: "Stage",
-      expectedYield: "Expected Yield",
-      aiCropRecommendations: "AI Crop Recommendations",
-      season: "Season",
-      investment: "Investment",
-      profit: "Profit",
-      getDetailedAnalysis: "Get Detailed Analysis",
-      aiPricePredictions: "AI Price Predictions",
-      current: "Current",
-      viewAllPriceTrends: "View All Price Trends",
-      aiPestDetection: "AI Pest Detection",
-      alert: "Alert",
-      detectedOn: "Detected on",
-      solution: "Solution",
-      prevention: "Prevention",
-      uploadCropPhoto: "Upload Crop Photo for AI Analysis",
-      analyzingImage: "Analyzing Image",
-      aiWeatherInsights: "AI Weather Insights",
-      smartRecommendation: "Smart Recommendation",
-      rainChance: "Rain Chance",
-      tempRange: "Temp Range",
-      soilMoisture: "Soil Moisture",
-      irrigation: "Irrigation",
-      aiFarmingAssistant: "AI Farming Assistant",
-      askAbout: "Ask about crop prices, weather, pests, fertilizers...",
-      askAI: "Ask AI",
-      speakNow: "Speak now...",
-      quickActions: "Quick Actions",
-      marketTrends: "Market Trends",
-      cropHealth: "Crop Health",
-      financialOverview: "Financial Overview",
-      exportOpportunities: "Export Opportunities"
+      yourFarmDetails: "Your Farm Details",
+      createPost: "Create Post",
+      sellYourProduce: "Sell Your Produce",
+      recentPosts: "Your Recent Posts",
+      noPosts: "No posts yet. Create your first post to sell your produce!",
+      cropDiseaseDiagnosis: "Crop Disease Diagnosis",
+      refreshData: "Refresh Data",
+      farmOverview: "Farm Overview",
+      marketPlace: "Market Place",
+      analytics: "Analytics"
     },
     hi: {
       welcome: "वापस स्वागत है",
       farmerDashboard: "किसान डैशबोर्ड",
-      aiAssistantActive: "एआई फार्मिंग असिस्टेंट सक्रिय",
       realTimeInsights: "अपनी उपज और मुनाफे को अधिकतम करने के लिए रीयल-टाइम जानकारी",
       activeCrops: "सक्रिय फसलें",
       monthlyRevenue: "मासिक आय",
       buyerRating: "खरीदार रेटिंग",
       growthRate: "विकास दर",
-      yourCurrentCrops: "आपकी वर्तमान फसलें",
-      area: "क्षेत्र",
-      stage: "चरण",
-      expectedYield: "अनुमानित उपज",
-      aiCropRecommendations: "एआई फसल सिफारिशें",
-      season: "मौसम",
-      investment: "निवेश",
-      profit: "लाभ",
-      getDetailedAnalysis: "विस्तृत विश्लेषण प्राप्त करें",
-      aiPricePredictions: "एआई मूल्य भविष्यवाणी",
-      current: "वर्तमान",
-      viewAllPriceTrends: "सभी मूल्य रुझान देखें",
-      aiPestDetection: "एआई कीट पहचान",
-      alert: "चेतावनी",
-      detectedOn: "पर पाया गया",
-      solution: "समाधान",
-      prevention: "रोकथाम",
-      uploadCropPhoto: "एआई विश्लेषण के लिए फसल फोटो अपलोड करें",
-      analyzingImage: "छवि का विश्लेषण कर रहा है",
-      aiWeatherInsights: "एआई मौसम जानकारी",
-      smartRecommendation: "स्मार्ट सिफारिश",
-      rainChance: "बारिश की संभावना",
-      tempRange: "तापमान सीमा",
-      soilMoisture: "मिट्टी की नमी",
-      irrigation: "सिंचाई",
-      aiFarmingAssistant: "एआई फार्मिंग असिस्टेंट",
-      askAbout: "फसल की कीमतें, मौसम, कीट, उर्वरक... के बारे में पूछें",
-      askAI: "एआई से पूछें",
-      speakNow: "अब बोलें...",
-      quickActions: "त्वरित कार्य",
-      marketTrends: "बाजार के रुझान",
-      cropHealth: "फसल स्वास्थ्य",
-      financialOverview: "वित्तीय अवलोकन",
-      exportOpportunities: "निर्यात के अवसर"
+      yourFarmDetails: "आपके फार्म का विवरण",
+      createPost: "पोस्ट बनाएं",
+      sellYourProduce: "अपनी उपज बेचें",
+      recentPosts: "आपकी हाल की पोस्ट",
+      noPosts: "अभी तक कोई पोस्ट नहीं। अपनी उपज बेचने के लिए अपनी पहली पोस्ट बनाएं!",
+      cropDiseaseDiagnosis: "फसल रोग निदान",
+      refreshData: "डेटा रिफ्रेश करें",
+      farmOverview: "फार्म अवलोकन",
+      marketPlace: "मार्केट प्लेस",
+      analytics: "विश्लेषण"
     },
     mr: {
       welcome: "पुन्हा स्वागत आहे",
       farmerDashboard: "शेतकरी डॅशबोर्ड",
-      aiAssistantActive: "AI शेती सहाय्यक सक्रिय",
       realTimeInsights: "तुमची उत्पादन आणि नफा वाढवण्यासाठी रिअल-टाइम माहिती",
       activeCrops: "सक्रिय पिके",
       monthlyRevenue: "मासिक उत्पन्न",
       buyerRating: "खरेदीदार रेटिंग",
       growthRate: "वाढ दर",
-      yourCurrentCrops: "तुमची सध्याची पिके",
-      area: "क्षेत्र",
-      stage: "टप्पा",
-      expectedYield: "अपेक्षित उत्पादन",
-      aiCropRecommendations: "AI पिक शिफारसी",
-      season: "हंगाम",
-      investment: "गुंतवणूक",
-      profit: "नफा",
-      getDetailedAnalysis: "तपशीलवार विश्लेषण मिळवा",
-      aiPricePredictions: "AI किंमत अंदाज",
-      current: "सध्याचे",
-      viewAllPriceTrends: "सर्व किंमत कल पहा",
-      aiPestDetection: "AI किडी ओळख",
-      alert: "सतर्कता",
-      detectedOn: "वर आढळले",
-      solution: "उपाय",
-      prevention: "प्रतिबंध",
-      uploadCropPhoto: "AI विश्लेषणासाठी पिक फोटो अपलोड करा",
-      analyzingImage: "प्रतिमेचे विश्लेषण करत आहे",
-      aiWeatherInsights: "AI हवामान माहिती",
-      smartRecommendation: "स्मार्ट शिफारस",
-      rainChance: "पाऊस संधी",
-      tempRange: "तापमान श्रेणी",
-      soilMoisture: "मातीतील ओलावा",
-      irrigation: "सिंचन",
-      aiFarmingAssistant: "AI शेती सहाय्यक",
-      askAbout: "पिक किमती, हवामान, किडी, खते... याबद्दल विचारा",
-      askAI: "AI ला विचारा",
-      speakNow: "आता बोला...",
-      quickActions: "द्रुत क्रिया",
-      marketTrends: "बाजारातील कल",
-      cropHealth: "पिक आरोग्य",
-      financialOverview: "आर्थिक आढावा",
-      exportOpportunities: "निर्यात संधी"
+      yourFarmDetails: "तुमचे शेत तपशील",
+      createPost: "पोस्ट तयार करा",
+      sellYourProduce: "तुमची उत्पादने विका",
+      recentPosts: "तुमच्या अलीकडील पोस्ट",
+      noPosts: "अद्याप कोणतीही पोस्ट नाही. तुमची उत्पादने विकण्यासाठी तुमची पहिली पोस्ट तयार करा!",
+      cropDiseaseDiagnosis: "पिक रोग निदान",
+      refreshData: "डेटा रिफ्रेश करा",
+      farmOverview: "शेताचा आढावा",
+      marketPlace: "मार्केट प्लेस",
+      analytics: "विश्लेषण"
     }
   };
 
   const content = dashboardContent[language] || dashboardContent.en;
 
-  // Real AI Data with dynamic updates
-  const [aiData, setAiData] = useState({
-    cropRecommendations: [
-      { 
-        crop: 'Tomatoes', 
-        confidence: 92, 
-        reason: language === 'hi' ? 'उच्च बाजार मांग (₹32-38/किग्रा), आपकी मिट्टी pH 6.5 के लिए उपयुक्त' : 
-               language === 'mr' ? 'उच्च बाजार माग (₹32-38/किग्रा), आपल्या माती pH 6.5 साठी योग्य' :
-               'High market demand (₹32-38/kg), suitable for your soil pH 6.5',
-        season: language === 'hi' ? 'साल भर' : language === 'mr' ? 'संपूर्ण वर्ष' : 'Year-round',
-        investment: '₹15,000/acre',
-        profit: '₹45,000-60,000/acre'
-      },
-      { 
-        crop: 'Bell Peppers', 
-        confidence: 85, 
-        reason: language === 'hi' ? 'निर्यात मांग बढ़ रही है, पिछले सीजन से 25% अधिक मार्जिन' :
-               language === 'mr' ? 'निर्यात माग वाढत आहे, मागील हंगामापेक्षा 25% जास्त मार्जिन' :
-               'Export demand growing, 25% higher margins than last season',
-        season: language === 'hi' ? 'सर्दी' : language === 'mr' ? 'हिवाळा' : 'Winter',
-        investment: '₹18,000/acre', 
-        profit: '₹50,000-70,000/acre'
+  // SEND MESSAGE FUNCTION — For ChatWindow.jsx
+const sendMessage = (text, resetInput) => {
+  if (!text.trim()) return;
+
+  // Add message from USER
+  setMessages(prev => [...prev, {
+    message: text,
+    fromSelf: true,
+    timestamp: new Date()
+  }]);
+
+  resetInput(""); // Clear input box
+
+  // Fake receiver typing
+  setTyping(true);
+  setTimeout(() => {
+    setTyping(false);
+    setMessages(prev => [
+      ...prev,
+      {
+        message: "Thanks! I will reply shortly.",
+        fromSelf: false
       }
-    ],
-    pricePredictions: [
-      { crop: 'Tomatoes', current: 25, predicted: 32, trend: 'up', timeframe: '2 weeks' },
-      { crop: 'Potatoes', current: 18, predicted: 15, trend: 'down', timeframe: '1 month' }
-    ],
-    pestAlerts: [
-      { 
-        crop: 'Tomatoes', 
-        pest: 'Aphids', 
-        severity: 'medium', 
-        solution: language === 'hi' ? 'नीम ऑयल स्प्रे (2ml/लीटर) हर 7 दिन में लगाएं' :
-                language === 'mr' ? 'कडूनिंब तेल स्प्रे (2ml/लीटर) दर 7 दिवसांनी लावा' :
-                'Apply neem oil spray (2ml/liter) every 7 days',
-        prevention: language === 'hi' ? 'पीले स्टिकी ट्रैप का उपयोग करें, उचित दूरी बनाए रखें' :
-                   language === 'mr' ? 'पिवळे स्टिकी ट्रॅप वापरा, योग्य अंतर राखा' :
-                   'Use yellow sticky traps, maintain proper spacing'
+    ]);
+  }, 1500);
+};
+
+const startVoiceRecognition = () => {
+  setTyping(true);
+
+  setTimeout(() => {
+    setTyping(false);
+
+    setMessages(prev => [
+      ...prev,
+      {
+        message: "🎤 Voice message feature coming soon...",
+        fromSelf: false
       }
-    ],
-    weatherInsights: {
-      recommendation: language === 'hi' ? 'कटाई 2 दिन के लिए स्थगित करें - भारी बारिश की संभावना (45mm)' :
-                     language === 'mr' ? 'कापणी 2 दिवसांसाठी पुढे ढकला - जोरदार पाऊसाची शक्यता (45mm)' :
-                     'Delay harvesting by 2 days - heavy rain predicted (45mm)',
-      risk: 'medium',
-      soilMoisture: language === 'hi' ? 'इष्टतम (65%)' : language === 'mr' ? 'इष्टतम (65%)' : 'Optimal (65%)',
-      irrigation: language === 'hi' ? 'इस सप्ताह पानी 20% कम करें' : 
-                 language === 'mr' ? 'या आठवड्यात पाणी 20% कमी करा' :
-                 'Reduce watering by 20% this week'
-    }
-  });
+    ]);
+  }, 2000);
+};
 
-  // Sample crop data for the farmer
-  const [farmerCrops] = useState([
-    { 
-      name: 'Tomatoes', 
-      area: language === 'hi' ? '2 एकड़' : language === 'mr' ? '2 एकर' : '2 acres', 
-      stage: language === 'hi' ? 'फूल आना' : language === 'mr' ? 'फुलोरा येणे' : 'Flowering', 
-      health: language === 'hi' ? 'अच्छा' : language === 'mr' ? 'चांगले' : 'Good', 
-      yield: '8 tons/acre' 
-    },
-    { 
-      name: 'Potatoes', 
-      area: language === 'hi' ? '1.5 एकड़' : language === 'mr' ? '1.5 एकर' : '1.5 acres', 
-      stage: language === 'hi' ? 'कंद बनना' : language === 'mr' ? 'कंद तयार होणे' : 'Tuber Formation', 
-      health: language === 'hi' ? 'उत्कृष्ट' : language === 'mr' ? 'उत्तम' : 'Excellent', 
-      yield: '12 tons/acre' 
-    }
-  ]);
-
-  // AI Chat Responses Database with multilingual support
-  const aiResponses = {
-    'price': {
-      tomatoes: language === 'hi' ? "🍅 टमाटर की कीमतें अगले 2 हफ्तों में ₹32-38/किग्रा तक बढ़ने की उम्मीद है। वर्तमान थोक: ₹25-28/किग्रा।" :
-               language === 'mr' ? "🍅 टोमॅटोच्या किंमती पुढील 2 आठवड्यात ₹32-38/किग्रा पर्यंत वाढण्याची शक्यता आहे. सध्याचे घाऊक: ₹25-28/किग्रा." :
-               "🍅 Tomato prices are expected to rise to ₹32-38/kg in the next 2 weeks. Current wholesale: ₹25-28/kg.",
-      potatoes: language === 'hi' ? "🥔 आलू की कीमतें एक महीने में ₹15-18/किग्रा तक गिर सकती हैं। संग्रहित स्टॉक अभी बेचने पर विचार करें।" :
-               language === 'mr' ? "🥔 बटाट्याच्या किंमती एका महिन्यात ₹15-18/किग्रा पर्यंत खाली येऊ शकतात. साठवलेला स्टॉक आत्ताच विकण्याचा विचार करा." :
-               "🥔 Potato prices may drop to ₹15-18/kg in a month. Consider selling stored stock now."
-    },
-    'weather': language === 'hi' ? "🌤️ अगले 7 दिन: हल्की बारिश की उम्मीद (15mm), तापमान 24°-32°C। सब्जी की फसलों के लिए अच्छा। मिट्टी की नमी इष्टतम।" :
-              language === 'mr' ? "🌤️ पुढील 7 दिवस: हलका पाऊस अपेक्षित (15mm), तापमान 24°-32°C। भाजीपाला पिकांसाठी चांगले. मातीतील ओलावा इष्टतम." :
-              "🌤️ Next 7 days: Light rain expected (15mm), temperatures 24°-32°C. Good for vegetable crops. Soil moisture optimal.",
-    'pest': language === 'hi' ? "🐛 इस सीजन के सामान्य कीट: टमाटर पर एफिड्स, चावल पर लीफ फोल्डर। एकीकृत कीट प्रबंधन का उपयोग करें। विशिष्ट निदान के लिए फोटो अपलोड करें।" :
-            language === 'mr' ? "🐛 या हंगामातील सामान्य किडी: टोमॅटोवर एफिड्स, तांदूळावर लीफ फोल्डर. एकात्मिक किडी व्यवस्थापन वापरा. विशिष्ट निदानासाठी फोटो अपलोड करा." :
-            "🐛 Common pests this season: Aphids on tomatoes, Leaf folder on rice. Use integrated pest management. Upload photos for specific diagnosis.",
-    'default': language === 'hi' ? "🤖 मैं मदद कर सकता हूं: फसल की कीमतें, मौसम का पूर्वानुमान, कीट नियंत्रण, उर्वरक सिफारिशें, बाजार के रुझान। कुछ भी पूछें!" :
-               language === 'mr' ? "🤖 मी मदत करू शकतो: पिक किमती, हवामान अंदाज, किडी नियंत्रण, खत शिफारसी, बाजार कल. काहीही विचारा!" :
-               "🤖 I can help with: crop prices, weather forecasts, pest control, fertilizer recommendations, market trends. Ask me anything!"
-  };
-
-  // Initialize chat with multilingual greeting
-  useEffect(() => {
-    const greeting = language === 'hi' 
-      ? "👋 नमस्ते! मैं आपका AI फार्मिंग असिस्टेंट हूं। मैं फसल सलाह, बाजार मूल्य, मौसम की जानकारी और कीट प्रबंधन में मदद कर सकता हूं। आप क्या जानना चाहेंगे?"
-      : language === 'mr'
-      ? "👋 नमस्कार! मी तुमचा AI शेती सहाय्यक आहे. मी पिक सल्ला, बाजारभाव, हवामान माहिती आणि किडी व्यवस्थापनात मदत करू शकतो. तुम्हाला काय जाणून घ्यायचे आहे?"
-      : "👋 Hello! I'm your AI Farming Assistant. I can help with crop advice, market prices, weather insights, and pest management. What would you like to know?";
-    
-    setChatHistory([{ type: 'ai', message: greeting }]);
-  }, [language]);
-
-  // Auto-scroll chat to bottom
-  useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-  }, [chatHistory]);
-
-  // Handle voice input
-  useEffect(() => {
-    if (voiceRecognition.transcript) {
-      setChatMessage(voiceRecognition.transcript);
-      setIsListening(false);
-    }
-  }, [voiceRecognition.transcript]);
-
-  const startVoiceInput = () => {
-    if (voiceRecognition.isSupported) {
-      setIsListening(true);
-      voiceRecognition.startListening();
-      toast.info(content.speakNow);
-    } else {
-      toast.error("Voice input not supported in your browser");
-    }
-  };
-
-  const stopVoiceInput = () => {
-    setIsListening(false);
-    voiceRecognition.stopListening();
-  };
-
-  // AI Analysis via backend (with fallback handled server-side)
-  const analyzeCropImage = async (image) => {
-    setIsAnalyzing(true);
-    toast.info(
-      language === 'hi'
-        ? 'आपकी फसल छवि का AI विश्लेषण कर रहा है...'
-        : language === 'mr'
-        ? 'तुमच्या पिक प्रतिमेचे AI विश्लेषण करत आहे...'
-        : 'AI is analyzing your crop image...'
+  const handlePostCreated = (newPost) => {
+    setPosts(prev => [newPost, ...prev]);
+    setShowPostCreator(false);
+    toast.success(
+      language === 'hi' ? 'पोस्ट सफलतापूर्वक बनाई गई!' :
+      language === 'mr' ? 'पोस्ट यशस्वीरित्या तयार केली!' :
+      'Post created successfully!'
     );
-
-    try {
-      const { data } = await aiAPI.analyzeImage({ image, language });
-      const msg = data?.message || 'Analysis complete';
-      setChatHistory((prev) => [
-        ...prev,
-        { type: 'user', message: `📸 Uploaded crop image for analysis` },
-        { type: 'ai', message: msg },
-      ]);
-      toast.success(
-        language === 'hi'
-          ? 'फसल विश्लेषण पूरा हुआ!'
-          : language === 'mr'
-          ? 'पिक विश्लेषण पूर्ण झाले!'
-          : 'Crop analysis completed!'
-      );
-    } catch (err) {
-      console.error('AI analysis error', err);
-      toast.error(
-        language === 'hi'
-          ? 'AI विश्लेषण विफल। कृपया बाद में पुनः प्रयास करें।'
-          : language === 'mr'
-          ? 'AI विश्लेषण अयशस्वी. कृपया नंतर पुन्हा प्रयत्न करा.'
-          : 'AI analysis failed. Please try again later.'
-      );
-    } finally {
-      setIsAnalyzing(false);
-    }
   };
 
-  // Handle AI Chat
-  const handleChatSubmit = (e) => {
-    e.preventDefault();
-    if (!chatMessage.trim()) return;
-
-    const userMessage = chatMessage.toLowerCase();
-    setChatHistory(prev => [...prev, { type: 'user', message: userMessage }]);
-
-    // AI Response Logic
-    let aiResponse = aiResponses.default;
-    
-    if (userMessage.includes('price') || userMessage.includes('rate') || userMessage.includes('कीमत') || userMessage.includes('किंमत')) {
-      if (userMessage.includes('tomato') || userMessage.includes('टमाटर') || userMessage.includes('टोमॅटो')) {
-        aiResponse = aiResponses.price.tomatoes;
-      } else if (userMessage.includes('potato') || userMessage.includes('आलू') || userMessage.includes('बटाटा')) {
-        aiResponse = aiResponses.price.potatoes;
-      } else {
-        aiResponse = language === 'hi' 
-          ? "💰 मेरे पास टमाटर, आलू, प्याज, गेहूं की कीमत डेटा है। आप किस फसल में रुचि रखते हैं?"
-          : language === 'mr'
-          ? "💰 माझ्याकडे टोमॅटो, बटाटा, कांदा, गहू यांच्या किंमतींचा डेटा आहे. तुम्हाला कोणत्या पिकात रस आहे?"
-          : "💰 I have price data for tomatoes, potatoes, onions, wheat. Which crop are you interested in?";
-      }
-    }
-    else if (userMessage.includes('weather') || userMessage.includes('rain') || userMessage.includes('मौसम') || userMessage.includes('हवामान')) {
-      aiResponse = aiResponses.weather;
-    }
-    else if (userMessage.includes('pest') || userMessage.includes('disease') || userMessage.includes('कीट') || userMessage.includes('किडी')) {
-      aiResponse = aiResponses.pest;
-    }
-    else if (userMessage.includes('hello') || userMessage.includes('hi') || userMessage.includes('नमस्ते') || userMessage.includes('नमस्कार')) {
-      aiResponse = language === 'hi' 
-        ? "👋 नमस्ते! मैं आपका AI फार्मिंग असिस्टेंट हूं। आज मैं आपकी कैसे मदद कर सकता हूं?"
-        : language === 'mr'
-        ? "👋 नमस्कार! मी तुमचा AI शेती सहाय्यक आहे. आज मी तुमची कशी मदत करू शकतो?"
-        : "👋 Hello! I'm your AI farming assistant. How can I help you today?";
-    }
-
-    setTimeout(() => {
-      setChatHistory(prev => [...prev, { type: 'ai', message: aiResponse }]);
-    }, 1000);
-
-    setChatMessage('');
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0
+    }).format(amount);
   };
 
-  // Handle Image Upload
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setUploadedImage(e.target.result);
-        analyzeCropImage(e.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Quick actions in multiple languages
-  const quickActions = {
-    en: ['Tomato prices?', 'Weather forecast', 'Pest control', 'Fertilizer advice'],
-    hi: ['टमाटर की कीमत?', 'मौसम पूर्वानुमान', 'कीट नियंत्रण', 'उर्वरक सलाह'],
-    mr: ['टोमॅटो किंमत?', 'हवामान अंदाज', 'किडी नियंत्रण', 'खत सल्ला']
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading your farm data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
+      
       {/* Header */}
       <div className="bg-gradient-to-r from-green-600 to-emerald-700 text-white py-8">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
             <div>
               <h1 className="text-3xl font-bold">{content.welcome}, {user?.name}!</h1>
               <p className="text-green-200 text-xl mt-2 flex items-center">
                 <span className="mr-2">👨‍🌾</span> {content.farmerDashboard}
               </p>
             </div>
-            <div className="text-right">
-              <div className="text-green-200">{user?.farmSize || '4 acres'}</div>
-              <div className="text-green-200">{user?.location || 'Maharashtra'}</div>
+            <div className="mt-4 md:mt-0 flex items-center space-x-4">
+              <button
+                onClick={fetchFarmData}
+                className="flex items-center space-x-2 bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg transition duration-200"
+              >
+                <FaSync className="w-4 h-4" />
+                <span>{content.refreshData}</span>
+              </button>
+              <button
+                onClick={() => setShowPostCreator(true)}
+                className="flex items-center space-x-2 bg-white text-green-600 hover:bg-green-50 px-4 py-2 rounded-lg font-semibold transition duration-200"
+              >
+                <FaPlus className="w-4 h-4" />
+                <span>{content.createPost}</span>
+              </button>
             </div>
           </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* AI Insights Banner */}
-        <div className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-2xl p-6 mb-8 shadow-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">🤖 {content.aiAssistantActive}</h2>
-              <p className="opacity-90">{content.realTimeInsights}</p>
-            </div>
-            <div className="text-4xl animate-pulse">⚡</div>
-          </div>
-        </div>
-
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {[
-            { icon: '🌾', value: farmerCrops.length, label: content.activeCrops, color: 'green' },
-            { icon: '💰', value: '₹45,600', label: content.monthlyRevenue, color: 'blue' },
-            { icon: '⭐', value: '4.8/5', label: content.buyerRating, color: 'yellow' },
-            { icon: '📈', value: '+15%', label: content.growthRate, color: 'purple' }
+            { 
+              icon: '🌾', 
+              value: realTimeStats.activeCrops, 
+              label: content.activeCrops, 
+              color: 'green',
+              format: (val) => val
+            },
+            { 
+              icon: '💰', 
+              value: realTimeStats.monthlyRevenue, 
+              label: content.monthlyRevenue, 
+              color: 'blue',
+              format: formatCurrency
+            },
+            { 
+              icon: '⭐', 
+              value: realTimeStats.buyerRating, 
+              label: content.buyerRating, 
+              color: 'yellow',
+              format: (val) => `${val}/5`
+            },
+            { 
+              icon: '📈', 
+              value: realTimeStats.growthRate, 
+              label: content.growthRate, 
+              color: 'purple',
+              format: (val) => `${(val * 100).toFixed(1)}%`
+            }
           ].map((stat, index) => (
             <div key={index} className={`bg-white p-6 rounded-xl shadow-md border-l-4 border-${stat.color}-500`}>
               <div className={`text-2xl text-${stat.color}-600 mb-2`}>{stat.icon}</div>
-              <div className="text-2xl font-bold text-gray-800">{stat.value}</div>
+              <div className="text-2xl font-bold text-gray-800">{stat.format(stat.value)}</div>
               <div className="text-gray-600">{stat.label}</div>
             </div>
           ))}
         </div>
 
-        {/* Your Crops Section */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <h3 className="text-xl font-semibold mb-4 flex items-center">
-            <span className="text-green-600 mr-2">🏞️</span>
-            {content.yourCurrentCrops}
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {farmerCrops.map((crop, index) => (
-              <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-semibold text-lg">{crop.name}</h4>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    crop.health === 'Excellent' || crop.health === 'उत्कृष्ट' || crop.health === 'उत्तम' 
-                      ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                  }`}>
-                    {crop.health}
-                  </span>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Farm Details & Disease Diagnosis */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Plantix Disease Diagnosis - Top on mobile */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <span className="text-red-600 mr-2">🌿</span>
+                {content.cropDiseaseDiagnosis}
+              </h2>
+              <PlantixDiagnosis />
+            </div>
+
+            {/* Farm Details */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <span className="text-green-600 mr-2">🏞️</span>
+                {content.yourFarmDetails}
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Basic Info */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-gray-700 border-b pb-2">Basic Information</h3>
+                  
+                  {user?.name && (
+                    <div>
+                      <label className="text-sm text-gray-500">Full Name</label>
+                      <p className="font-medium">{user.name}</p>
+                    </div>
+                  )}
+                  
+                  {user?.phone && (
+                    <div>
+                      <label className="text-sm text-gray-500">Phone</label>
+                      <p className="font-medium">{user.phone}</p>
+                    </div>
+                  )}
+                  
+                  {user?.email && (
+                    <div>
+                      <label className="text-sm text-gray-500">Email</label>
+                      <p className="font-medium">{user.email}</p>
+                    </div>
+                  )}
+                  
+                  {user?.role && (
+                    <div>
+                      <label className="text-sm text-gray-500">Role</label>
+                      <p className="font-medium capitalize">{user.role}</p>
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-1 text-sm text-gray-600">
-                  <div>📍 {content.area}: {crop.area}</div>
-                  <div>🌱 {content.stage}: {crop.stage}</div>
-                  <div>📦 {content.expectedYield}: {crop.yield}</div>
+
+                {/* Farm Specific Info */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-gray-700 border-b pb-2">Farm Details</h3>
+                  
+                  {user?.landArea && (
+                    <div>
+                      <label className="text-sm text-gray-500">Farm Size</label>
+                      <p className="font-medium">{user.landArea} {user.landAreaUnit || 'acres'}</p>
+                    </div>
+                  )}
+                  
+                  {user?.farmLocation && (
+                    <div>
+                      <label className="text-sm text-gray-500">Location</label>
+                      <p className="font-medium">{user.farmLocation}</p>
+                    </div>
+                  )}
+                  
+                  {user?.soilType && (
+                    <div>
+                      <label className="text-sm text-gray-500">Soil Type</label>
+                      <p className="font-medium">{user.soilType}</p>
+                    </div>
+                  )}
+                  
+                  {user?.farmingExperience && (
+                    <div>
+                      <label className="text-sm text-gray-500">Experience</label>
+                      <p className="font-medium">{user.farmingExperience}</p>
+                    </div>
+                  )}
+                  
+                  {user?.irrigationType && (
+                    <div>
+                      <label className="text-sm text-gray-500">Irrigation</label>
+                      <p className="font-medium">{user.irrigationType}</p>
+                    </div>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* AI Features Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* AI Crop Recommendations */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-xl font-semibold mb-4 flex items-center">
-              <span className="text-green-600 mr-2">🌱</span>
-              {content.aiCropRecommendations}
-            </h3>
-            <div className="space-y-4">
-              {aiData.cropRecommendations.map((rec, index) => (
-                <div key={index} className="border-l-4 border-green-500 pl-4 py-3 bg-green-50 rounded-r-lg">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h4 className="font-semibold text-gray-800 text-lg">{rec.crop}</h4>
-                      <p className="text-sm text-gray-600 mt-1">{rec.reason}</p>
-                    </div>
-                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                      {rec.confidence}% match
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs mt-2">
-                    <div>📅 {content.season}: {rec.season}</div>
-                    <div>💵 {content.investment}: {rec.investment}</div>
-                    <div>💰 {content.profit}: {rec.profit}</div>
-                  </div>
-                  <button 
-                    onClick={() => getDetailedAnalysis(rec.crop)}
-                    className="mt-3 w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition duration-300 text-sm"
-                  >
-                    {content.getDetailedAnalysis}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Price Predictions */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-xl font-semibold mb-4 flex items-center">
-              <span className="text-blue-600 mr-2">📊</span>
-              {content.aiPricePredictions} (₹/kg)
-            </h3>
-            <div className="space-y-3">
-              {aiData.pricePredictions.map((pred, index) => (
-                <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className="flex items-center">
-                    <span className="text-lg mr-3">
-                      {pred.crop === 'Tomatoes' ? '🍅' : '🥔'}
-                    </span>
-                    <div>
-                      <span className="font-semibold">{pred.crop}</span>
-                      <div className="text-xs text-gray-500">
-                        {content.current}: ₹{pred.current}/kg
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className={`font-semibold text-lg ${pred.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                      ₹{pred.predicted}/kg
-                    </div>
-                    <div className={`text-xs ${pred.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                      {pred.trend === 'up' ? '↗️ ' : '↘️ '}{pred.timeframe}
-                    </div>
+              {/* Crops Section */}
+              {user?.mainCrops && user.mainCrops.length > 0 && (
+                <div className="mt-6 pt-6 border-t">
+                  <h3 className="font-semibold text-gray-700 mb-3">Crops You Grow</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {user.mainCrops.map((crop, index) => (
+                      <span
+                        key={index}
+                        className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium"
+                      >
+                        {crop}
+                      </span>
+                    ))}
                   </div>
                 </div>
-              ))}
+              )}
             </div>
-            <button className="w-full mt-4 border-2 border-blue-600 text-blue-600 py-2 rounded-lg hover:bg-blue-50 transition duration-300">
-              {content.viewAllPriceTrends}
-            </button>
-          </div>
 
-          {/* Pest & Disease Alerts */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-xl font-semibold mb-4 flex items-center">
-              <span className="text-red-600 mr-2">⚠️</span>
-              {content.aiPestDetection}
-            </h3>
-            <div className="space-y-4">
-              {aiData.pestAlerts.map((alert, index) => (
-                <div key={index} className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h4 className="font-semibold text-red-800 text-lg">{alert.pest} {content.alert}!</h4>
-                      <p className="text-red-600">{content.detectedOn} {alert.crop} plants</p>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      alert.severity === 'high' ? 'bg-red-500 text-white' : 
-                      alert.severity === 'medium' ? 'bg-orange-500 text-white' : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {alert.severity} risk
-                    </span>
-                  </div>
-                  <div className="space-y-2">
-                    <div>
-                      <span className="font-medium text-gray-700">{content.solution}:</span>
-                      <p className="text-sm text-gray-700">{alert.solution}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">{content.prevention}:</span>
-                      <p className="text-sm text-gray-700">{alert.prevention}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4">
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={handleImageUpload}
-                className="hidden" 
-                id="crop-image"
-              />
-              <label 
-                htmlFor="crop-image"
-                className="block w-full border-2 border-dashed border-green-600 text-green-600 py-3 rounded-lg text-center hover:bg-green-50 transition duration-300 cursor-pointer"
-              >
-                {isAnalyzing ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    {content.analyzingImage}
-                  </span>
-                ) : (
-                  `📸 ${content.uploadCropPhoto}`
-                )}
-              </label>
-            </div>
-          </div>
-
-          {/* Weather Insights */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-xl font-semibold mb-4 flex items-center">
-              <span className="text-cyan-600 mr-2">🌤️</span>
-              {content.aiWeatherInsights}
-            </h3>
-            <div className="bg-cyan-50 rounded-lg p-4 mb-4 border border-cyan-200">
-              <div className="flex items-center mb-2">
-                <span className="text-cyan-600 mr-2">💡</span>
-                <span className="font-semibold">{content.smartRecommendation}</span>
-              </div>
-              <p className="text-cyan-800">{aiData.weatherInsights.recommendation}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              {[
-                { icon: '🌧️', label: content.rainChance, value: '70%' },
-                { icon: '🌡️', label: content.tempRange, value: '24°-32°' },
-                { icon: '💧', label: content.soilMoisture, value: aiData.weatherInsights.soilMoisture },
-                { icon: '🚿', label: content.irrigation, value: aiData.weatherInsights.irrigation }
-              ].map((item, index) => (
-                <div key={index} className="text-center p-3 bg-gray-50 rounded-lg">
-                  <div className="text-lg">{item.icon}</div>
-                  <div className="text-sm text-gray-600">{item.label}</div>
-                  <div className="font-semibold">{item.value}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* AI Chat Assistant */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h3 className="text-xl font-semibold mb-4 flex items-center">
-            <span className="text-purple-600 mr-2">💬</span>
-            {content.aiFarmingAssistant}
-          </h3>
-          
-          {/* Chat History */}
-          <div 
-            ref={chatContainerRef}
-            className="bg-gray-50 rounded-lg p-4 mb-4 h-64 overflow-y-auto"
-          >
-            {chatHistory.map((chat, index) => (
-              <div key={index} className={`mb-3 ${chat.type === 'user' ? 'text-right' : 'text-left'}`}>
-                <div className={`inline-block max-w-[80%] p-3 rounded-lg ${
-                  chat.type === 'user' 
-                    ? 'bg-green-600 text-white rounded-br-none' 
-                    : 'bg-white border border-gray-200 rounded-bl-none'
-                }`}>
-                  {chat.message.split('\n').map((line, i) => (
-                    <div key={i}>{line}</div>
-                  ))}
-                </div>
-              </div>
-            ))}
-            {isListening && (
-              <div className="text-center p-2">
-                <div className="inline-flex items-center space-x-2 bg-yellow-100 px-4 py-2 rounded-full">
-                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm text-yellow-800">{content.speakNow}</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Quick Action Buttons */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            <span className="text-sm text-gray-600 mr-2">{content.quickActions}:</span>
-            {(quickActions[language] || quickActions.en).map((action, index) => (
-              <button
-                key={index}
-                onClick={() => setChatMessage(action)}
-                className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm transition-colors"
-              >
-                {action}
-              </button>
-            ))}
-          </div>
-
-          {/* Chat Input with Voice */}
-          <form onSubmit={handleChatSubmit} className="flex gap-2">
-            <div className="flex-1 relative">
-              <input 
-                type="text" 
-                value={chatMessage}
-                onChange={(e) => setChatMessage(e.target.value)}
-                placeholder={content.askAbout}
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 pr-12"
-              />
-              <button
-                type="button"
-                onClick={isListening ? stopVoiceInput : startVoiceInput}
-                className={`absolute right-3 top-1/2 transform -translate-y-1/2 p-2 rounded-full transition-colors ${
-                  isListening 
-                    ? 'bg-red-100 text-red-600 animate-pulse' 
-                    : voiceRecognition.isSupported
-                    ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                }`}
-                disabled={!voiceRecognition.isSupported}
-                title={voiceRecognition.isSupported ? 'Voice Input' : 'Voice not supported'}
-              >
-                {isListening ? <FaStop className="w-4 h-4" /> : <FaMicrophone className="w-4 h-4" />}
-              </button>
-            </div>
-            <button 
-              type="submit"
-              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition duration-300 font-medium flex items-center space-x-2"
+            {/* Recent Posts */}
+            {posts.slice(0, 3).map((post) => (
+            <div 
+              key={post._id} 
+              className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white"
             >
-              <span>{content.askAI}</span>
-            </button>
-          </form>
-        </div>
+              {/* HEADER */}
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-semibold text-lg">{post.title}</h3>
+                <span className="text-sm text-gray-500">
+                  {new Date(post.createdAt).toLocaleDateString()}
+                </span>
+              </div>
 
-        {/* Posts Section */}
-        <div className="mt-8">
-          <h3 className="text-2xl font-semibold mb-4 flex items-center">
-            <span className="text-green-600 mr-2">📝</span>
-            {language === 'hi' ? 'किसानों की पोस्ट' : language === 'mr' ? 'शेतकऱ्यांच्या पोस्ट' : 'Farmers Posts'}
-          </h3>
-          <PostsFeed userType="farmer" />
+              {/* DESCRIPTION */}
+              <p className="text-gray-600 mb-3">{post.description}</p>
+
+              {/* IMAGE */}
+              {post.media && (
+                <img 
+                  src={post.media} 
+                  alt="Post media" 
+                  className="rounded-lg w-full max-h-48 object-cover mb-3"
+                />
+              )}
+
+              {/* PRICE + QUANTITY */}
+              <div className="flex justify-between items-center text-sm text-gray-600 mb-3">
+                <span className="font-medium">Price: ₹{post.price}</span>
+                <span>Quantity: {post.quantity} {post.unit}</span>
+              </div>
+
+              {/* LOCATION */}
+              <p className="text-sm text-gray-500 mb-3">📍 {post.location}</p>
+
+              {/* CHAT BUTTON */}
+              <button
+                onClick={() =>
+                  setChatWith({
+                    farmerId: post.farmerId,
+                    farmerName: post.farmerName || user.name,
+                  })
+                }
+                className="w-full py-2 mt-1 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition"
+              >
+                💬 Chat with Buyer
+              </button>
+            </div>
+          ))}
+
+          </div>
+
+          {/* Right Column - Quick Actions & Analytics */}
+          <div className="space-y-8">
+            {/* Quick Actions */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <span className="text-purple-600 mr-2">⚡</span>
+                Quick Actions
+              </h2>
+              
+              <div className="space-y-3">
+                <button
+                  onClick={() => setShowPostCreator(true)}
+                  className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition duration-200 font-semibold flex items-center justify-center space-x-2"
+                >
+                  <FaPlus className="w-4 h-4" />
+                  <span>{content.sellYourProduce}</span>
+                </button>
+                
+                <button className="w-full border-2 border-blue-600 text-blue-600 py-3 px-4 rounded-lg hover:bg-blue-50 transition duration-200 font-semibold">
+                  View Market Prices
+                </button>
+                
+                <button className="w-full border-2 border-purple-600 text-purple-600 py-3 px-4 rounded-lg hover:bg-purple-50 transition duration-200 font-semibold">
+                  Crop Health Analysis
+                </button>
+                
+                <button className="w-full border-2 border-orange-600 text-orange-600 py-3 px-4 rounded-lg hover:bg-orange-50 transition duration-200 font-semibold">
+                  Financial Reports
+                </button>
+              </div>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Recent Activity</h2>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <div>
+                    <p className="font-medium">New buyer inquiry</p>
+                    <p className="text-sm text-gray-600">2 hours ago</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <div>
+                    <p className="font-medium">Price alert: Tomatoes</p>
+                    <p className="text-sm text-gray-600">5 hours ago</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-3 p-3 bg-yellow-50 rounded-lg">
+                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                  <div>
+                    <p className="font-medium">Weather advisory</p>
+                    <p className="text-sm text-gray-600">1 day ago</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <VoicePostCreator onPostCreated={() => { /* refresh handled inside feed by remount if needed */ }} />
+
+      {/* Voice Post Creator Modal */}
+      {showPostCreator && (
+        <VoicePostCreator 
+          onPostCreated={handlePostCreated}
+          onClose={() => setShowPostCreator(false)}
+        />
+      )}
+
+       {/* CHAT WINDOW POPUP */}
+      {chatWith && (
+        <div className="fixed bottom-4 right-4 w-full md:w-[450px] shadow-2xl rounded-xl z-50">
+          <ChatWindow
+            chat={chatWith}
+            messages={messages}
+            isTyping={typing}
+            onSend={sendMessage}
+            startVoice={startVoice}
+          />
+        </div>
+      )}
+
       <Footer />
     </div>
   );

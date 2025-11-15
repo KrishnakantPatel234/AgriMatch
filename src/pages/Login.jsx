@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
@@ -6,13 +6,9 @@ import { useVoiceRecognition } from "../hooks/UseVoiceRecognition";
 import { toast } from "react-toastify";
 import { FcGoogle } from "react-icons/fc";
 import { HiEye, HiEyeOff, HiMicrophone } from "react-icons/hi";
-import { authAPI } from "../services/Api";
 
 const Login = () => {
-  const [formData, setFormData] = useState({ 
-    phone: "", // Only phone number for login
-    password: "" 
-  });
+  const [formData, setFormData] = useState({ phone: "", password: "" });
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activeVoiceField, setActiveVoiceField] = useState(null);
@@ -21,7 +17,9 @@ const Login = () => {
   const { language } = useLanguage();
   const navigate = useNavigate();
 
-  // Multilingual content
+  /* ============================================================
+     MULTILINGUAL TEXT
+  ============================================================ */
   const content = {
     en: {
       title: "Sign in to AgriMatch",
@@ -117,139 +115,111 @@ const Login = () => {
       passwordSpaces: "पासवर्डमध्ये स्पेस असू शकत नाहीत"
     }
   };
-
   const t = content[language] || content.en;
 
-  // Voice recognition setup
-  const getLanguageCode = (lang) => {
-    const codes = { en: 'en-US', hi: 'hi-IN', mr: 'mr-IN' };
-    return codes[lang] || 'en-US';
-  };
+  /* ============================================================
+     VOICE RECOGNITION
+  ============================================================ */
+  const getLangCode = (lang) => ({ en: "en-US", hi: "hi-IN", mr: "mr-IN" }[lang] || "en-US");
 
-  const voiceRecognition = useVoiceRecognition(getLanguageCode(language));
+  const voiceRecognition = useVoiceRecognition(getLangCode(language));
 
-  // Handle voice input
-  React.useEffect(() => {
+  useEffect(() => {
     if (voiceRecognition.transcript && activeVoiceField) {
-      const processedValue = activeVoiceField === 'password' 
-        ? voiceRecognition.transcript.replace(/\s/g, '') // Remove spaces for password
-        : voiceRecognition.transcript;
-      
-      setFormData(prev => ({
-        ...prev,
-        [activeVoiceField]: processedValue
-      }));
+      const value =
+        activeVoiceField === "password"
+          ? voiceRecognition.transcript.replace(/\s/g, "")
+          : voiceRecognition.transcript;
+
+      setFormData((prev) => ({ ...prev, [activeVoiceField]: value }));
       setActiveVoiceField(null);
+
       toast.success(t.voiceCaptured);
     }
-  }, [voiceRecognition.transcript, activeVoiceField, t]);
+  }, [voiceRecognition.transcript]);
 
-  const handleVoiceInput = (fieldName) => {
-    if (voiceRecognition.isListening && activeVoiceField === fieldName) {
+  const handleVoiceInput = (field) => {
+    if (voiceRecognition.isListening) {
       voiceRecognition.stopListening();
       setActiveVoiceField(null);
     } else {
-      setActiveVoiceField(fieldName);
+      setActiveVoiceField(field);
       voiceRecognition.startListening();
       toast.info(t.speakNow);
     }
   };
 
+  /* ============================================================
+     INPUT HANDLERS
+  ============================================================ */
   const handleChange = (e) => {
-  const { name, value } = e.target;
-  
-  // Auto-format phone number
-  if (name === "phone") {
-    // Remove all non-digit characters
-    const cleaned = value.replace(/\D/g, "");
-    
-    // If the input is empty or only contains +91, clear it
-    if (cleaned === '' || cleaned === '91') {
-      setFormData(prev => ({ ...prev, [name]: '' }));
-      return;
-    }
-    
-    let formatted = '';
-    
-    // If the number starts with 91, remove it and format the rest
-    if (cleaned.startsWith('91') && cleaned.length > 2) {
-      const withoutCountryCode = cleaned.slice(2);
-      if (withoutCountryCode.length <= 5) {
-        formatted = `+91 ${withoutCountryCode}`;
-      } else if (withoutCountryCode.length <= 10) {
-        formatted = `+91 ${withoutCountryCode.slice(0, 5)} ${withoutCountryCode.slice(5)}`;
-      } else {
-        formatted = `+91 ${withoutCountryCode.slice(0, 5)} ${withoutCountryCode.slice(5, 10)} ${withoutCountryCode.slice(10, 15)}`;
-      }
-    } 
-    // If number doesn't start with 91, format as Indian number
-    else if (cleaned.length > 0) {
-      if (cleaned.length <= 5) {
-        formatted = `+91 ${cleaned}`;
-      } else if (cleaned.length <= 10) {
-        formatted = `+91 ${cleaned.slice(0, 5)} ${cleaned.slice(5)}`;
-      } else {
-        formatted = `+91 ${cleaned.slice(0, 5)} ${cleaned.slice(5, 10)} ${cleaned.slice(10, 15)}`;
-      }
-    }
-    
-    setFormData(prev => ({ ...prev, [name]: formatted }));
-  } else if (name === "password") {
-    // Remove spaces from password
-    const cleanedPassword = value.replace(/\s/g, '');
-    setFormData(prev => ({ ...prev, [name]: cleanedPassword }));
-  } else {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  }
-};
+    const { name, value } = e.target;
 
-  // Function to redirect based on user role
-  const redirectToDashboard = (userRole) => {
-    const dashboardRoutes = {
-      farmer: '/dashboard/farmer',
-      buyer: '/dashboard/buyer',
-      transport: '/dashboard/transport',
-      storage: '/dashboard/storage',
-      admin: '/dashboard',
-      default: '/dashboard'
-    };
+    if (name === "phone") {
+      const digits = value.replace(/\D/g, "");
+      if (digits.length === 0) {
+        setFormData((p) => ({ ...p, phone: "" }));
+        return;
+      }
 
-    const route = dashboardRoutes[userRole] || dashboardRoutes.default;
-    navigate(route);
+      let formatted = "";
+
+      const num = digits.startsWith("91") ? digits.slice(2) : digits;
+
+      if (num.length <= 5) formatted = `+91 ${num}`;
+      else if (num.length <= 10)
+        formatted = `+91 ${num.slice(0, 5)} ${num.slice(5)}`;
+      else
+        formatted = `+91 ${num.slice(0, 5)} ${num.slice(5, 10)} ${num.slice(
+          10,
+          15
+        )}`;
+
+      setFormData((p) => ({ ...p, phone: formatted }));
+    } else if (name === "password") {
+      setFormData((p) => ({ ...p, password: value.replace(/\s/g, "") }));
+    } else {
+      setFormData((p) => ({ ...p, [name]: value }));
+    }
   };
 
+  /* ============================================================
+     ROLE-BASED REDIRECTION
+  ============================================================ */
+  const redirectToDashboard = (role) => {
+    const routes = {
+      farmer: "/dashboard/farmer",
+      buyer: "/dashboard/buyer",
+      transport: "/dashboard/transport",
+      storage: "/dashboard/storage",
+      admin: "/dashboard"
+    };
+    navigate(routes[role] || "/dashboard");
+  };
+
+  /* ============================================================
+     HANDLE LOGIN
+  ============================================================ */
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const { phone, password } = formData;
 
-    // Basic validation
-    if (!phone || !password) {
-      return toast.error(t.fieldsRequired);
-    }
+    if (!phone || !password) return toast.error(t.fieldsRequired);
 
-    // Validate Indian phone number
-    const phoneDigits = phone.replace(/\D/g, "");
-    if (phoneDigits.length !== 12 || !phoneDigits.startsWith('91')) {
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length !== 12 || !digits.startsWith("91"))
       return toast.error(t.invalidPhone);
-    }
 
-    // Validate password has no spaces
-    if (password.includes(' ')) {
-      return toast.error(t.passwordSpaces);
-    }
+    if (password.includes(" ")) return toast.error(t.passwordSpaces);
 
     setLoading(true);
+
     try {
       const result = await login(formData);
+
       if (result.success) {
         toast.success(t.loginSuccess);
-        
-        // Get user role from result or from AuthContext
-        const userRole = result.user?.role || 'farmer'; // Default to farmer if not specified
-        
-        // Redirect to appropriate dashboard
-        redirectToDashboard(userRole);
+        redirectToDashboard(result.user.role);
       }
     } catch (err) {
       console.error(err);
@@ -259,21 +229,9 @@ const Login = () => {
     }
   };
 
-  const handleGoogleLogin = () => {
-    // For demo purposes, create a Google user and log them in
-    setLoading(true);
-    setTimeout(() => {
-      // Simulate Google login success
-      toast.success(t.googleSuccess);
-      setLoading(false);
-      
-      // For demo, redirect to farmer dashboard by default
-      // You can modify this based on your Google login logic
-      navigate("/dashboard/farmer");
-    }, 1500);
-  };
-
-  // Demo accounts for quick testing - UPDATED with roles
+  /* ============================================================
+     DEMO ACCOUNTS
+  ============================================================ */
   const demoAccounts = [
     { phone: "+91 98765 43210", password: "demo123", role: "farmer" },
     { phone: "+91 87654 32109", password: "demo123", role: "buyer" },
@@ -281,59 +239,38 @@ const Login = () => {
     { phone: "+91 65432 10987", password: "demo123", role: "storage" }
   ];
 
-  const fillDemoAccount = (account) => {
-    setFormData({
-      phone: account.phone,
-      password: account.password
-    });
-    toast.info(`Demo ${account.role} account filled`);
-  };
-
-  // Handle demo account login directly
-  const handleDemoLogin = async (account) => {
+  const handleDemoLogin = async (acct) => {
     setLoading(true);
     try {
-      // Simulate login with demo account
-      const result = await login({
-        phone: account.phone,
-        password: account.password
-      });
-      
+      const result = await login(acct);
       if (result.success) {
-        toast.success(`Demo ${account.role} login successful!`);
-        // Redirect to the specific dashboard based on demo account role
-        redirectToDashboard(account.role);
+        toast.success(`Demo ${acct.role} login successful`);
+        redirectToDashboard(acct.role);
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error(t.invalidCredentials);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogin = async (credentials) => {
-  try {
-    const response = await authAPI.login(credentials);
-    
-    if (response.data) {
-      // Store token and user data
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      
-      // Redirect based on role
-      const role = response.data.user.role;
-      navigate(`/dashboard/${role}`);
-    }
-  } catch (error) {
-    console.error('Login failed:', error);
-  }
-};
+  /* ============================================================
+     GOOGLE LOGIN (DEMO)
+  ============================================================ */
+  const handleGoogleLogin = () => {
+    toast.success("Google login simulated!");
+    navigate("/dashboard/farmer");
+  };
 
+  /* ============================================================
+     UI RETURN
+  ============================================================ */
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
+
         <h2 className="text-3xl font-bold text-center text-gray-800">{t.title}</h2>
+
         <p className="text-center text-sm mt-2 text-gray-600">
           {t.newHere}{" "}
           <Link to="/signup" className="text-green-600 font-medium hover:underline">
@@ -341,18 +278,19 @@ const Login = () => {
           </Link>
         </p>
 
-        {/* Demo Accounts - UPDATED with direct login */}
+        {/* DEMO ACCOUNTS */}
         <div className="mt-4 p-4 bg-blue-50 rounded-lg">
           <p className="text-sm text-blue-700 text-center mb-2">{t.demoAccess}</p>
+
           <div className="grid grid-cols-2 gap-2">
-            {demoAccounts.map((account, index) => (
+            {demoAccounts.map((acct, i) => (
               <button
-                key={index}
-                onClick={() => handleDemoLogin(account)}
+                key={i}
                 disabled={loading}
-                className="text-xs py-2 px-3 bg-white border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => handleDemoLogin(acct)}
+                className="text-xs py-2 px-3 bg-white border border-blue-200 rounded-lg hover:bg-blue-100 disabled:opacity-50"
               >
-                Demo {account.role}
+                Demo {acct.role}
               </button>
             ))}
           </div>
@@ -361,134 +299,72 @@ const Login = () => {
         {/* Voice Help */}
         {voiceRecognition.isSupported && (
           <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
-            <p className="text-sm text-green-700 text-center">
-              {t.voiceHelp}
-            </p>
+            <p className="text-sm text-green-700 text-center">{t.voiceHelp}</p>
           </div>
         )}
 
         <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
-          
-          {/* Phone Input */}
+          {/* PHONE INPUT */}
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-              {t.phoneLabel}
-            </label>
+            <label className="block text-sm font-medium">{t.phoneLabel}</label>
             <div className="relative">
               <input
                 type="tel"
                 name="phone"
-                placeholder={t.phonePlaceholder}
-                className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
                 value={formData.phone}
                 onChange={handleChange}
-                maxLength={17}
+                placeholder={t.phonePlaceholder}
+                className="w-full px-4 py-2 pr-12 border rounded-lg focus:ring-green-500"
               />
+
               <button
                 type="button"
-                onClick={() => handleVoiceInput('phone')}
+                onClick={() => handleVoiceInput("phone")}
                 disabled={!voiceRecognition.isSupported}
-                className={`absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full ${
-                  voiceRecognition.isListening && activeVoiceField === 'phone'
-                    ? 'bg-red-100 text-red-600 animate-pulse'
-                    : voiceRecognition.isSupported
-                    ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                }`}
+                className="absolute right-3 top-1/2 -translate-y-1/2 bg-green-100 p-1 rounded-full"
               >
                 <HiMicrophone size={16} />
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              {t.phoneHelp}
-            </p>
           </div>
 
-          {/* Password Input */}
+          {/* PASSWORD INPUT */}
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              {t.passwordLabel}
-            </label>
+            <label className="block text-sm font-medium">{t.passwordLabel}</label>
             <div className="relative">
               <input
                 type={showPass ? "text" : "password"}
                 name="password"
-                placeholder={t.passwordPlaceholder}
-                className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
                 value={formData.password}
                 onChange={handleChange}
+                placeholder={t.passwordPlaceholder}
+                className="w-full px-4 py-2 pr-12 border rounded-lg focus:ring-green-500"
               />
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
+
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
                 <button
                   type="button"
-                  onClick={() => handleVoiceInput('password')}
+                  onClick={() => handleVoiceInput("password")}
                   disabled={!voiceRecognition.isSupported}
-                  className={`p-1 rounded-full ${
-                    voiceRecognition.isListening && activeVoiceField === 'password'
-                      ? 'bg-red-100 text-red-600 animate-pulse'
-                      : voiceRecognition.isSupported
-                      ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  }`}
+                  className="bg-green-100 p-1 rounded-full"
                 >
                   <HiMicrophone size={16} />
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setShowPass((p) => !p)}
-                  className="p-1 text-gray-500 hover:text-gray-700"
-                >
+
+                <button type="button" onClick={() => setShowPass((p) => !p)}>
                   {showPass ? <HiEyeOff size={18} /> : <HiEye size={18} />}
                 </button>
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              {t.passwordHelp}
-            </p>
           </div>
 
-          {/* Voice Listening Indicator */}
-          {voiceRecognition.isListening && (
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <div className="flex items-center justify-center space-x-2">
-                <div className="animate-pulse">
-                  <HiMicrophone className="h-4 w-4 text-yellow-600" />
-                </div>
-                <p className="text-sm text-yellow-700">
-                  {t.listening} {activeVoiceField}... {t.speakNow}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Forgot Password */}
-          <div className="text-right">
-            <button
-              type="button"
-              className="text-sm text-green-600 hover:text-green-700 hover:underline"
-              onClick={() => toast.info("Password reset feature coming soon")}
-            >
-              {t.forgotPassword}
-            </button>
-          </div>
-
-          {/* Submit button */}
+          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg disabled:opacity-50"
           >
-            {loading ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                {t.signingIn}
-              </span>
-            ) : (
-              t.signIn
-            )}
+            {loading ? t.signingIn : t.signIn}
           </button>
 
           {/* Divider */}
@@ -498,33 +374,25 @@ const Login = () => {
             <div className="h-[1px] bg-gray-300 w-full"></div>
           </div>
 
-          {/* Google Login */}
+          {/* GOOGLE LOGIN */}
           <button
             type="button"
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 border border-gray-300 py-3 rounded-lg hover:bg-gray-50 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 border py-3 rounded-lg"
           >
-            <FcGoogle size={22} /> 
-            {loading ? t.signingIn : t.googleLogin}
+            <FcGoogle size={22} />
+            {t.googleLogin}
           </button>
         </form>
 
         {/* Additional Help */}
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <p className="text-sm text-gray-600 text-center">
-            {t.welcome}
-          </p>
-          <p className="text-xs text-gray-500 text-center mt-2">
-            {t.noAccount} <Link to="/signup" className="text-green-600 hover:underline">{t.signUp}</Link>
-          </p>
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg text-center text-sm text-gray-600">
+          {t.welcome}
         </div>
 
-        {/* Security Note */}
-        <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-          <p className="text-xs text-yellow-700 text-center">
-            {t.securityNote}
-          </p>
+        <div className="mt-4 p-3 bg-yellow-50 border rounded-lg text-xs text-yellow-700 text-center">
+          {t.securityNote}
         </div>
       </div>
     </div>

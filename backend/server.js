@@ -1,54 +1,40 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-require('dotenv').config();
+const express = require("express");
+const cors = require("cors");
+const http = require("http");
+const { Server } = require("socket.io");
+
 
 const app = express();
 
-// Middleware
-app.use(helmet());
-app.use(cors());
-app.use(morgan('combined'));
-app.use(express.json());
+// Must match your frontend
+app.use(cors({
+  origin: "http://localhost:5174",
+  credentials: true
+}));
 
-// Import routes
-const authRoutes = require('./routes/auth');
-const dashboardRoutes = require('./routes/dashboard');
-const directoryRoutes = require('./routes/directory');
-const userRoutes = require('./routes/users');
+const server = http.createServer(app);
 
-// Use routes
-app.use('/api/auth', authRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/directory', directoryRoutes);
-app.use('/api/users', userRoutes);
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5174",
+    methods: ["GET", "POST"],
+    credentials: true
+  },
+  transports: ["websocket", "polling"] // same as frontend
+});
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    message: 'AgriMatch Backend is running',
-    timestamp: new Date().toISOString()
+//------------------------------------
+// SOCKET HANDLERS
+//------------------------------------
+io.on("connection", (socket) => {
+  console.log("🔗 New client connected:", socket.id);
+
+  socket.on("disconnect", () => {
+    console.log("❌ Client disconnected:", socket.id);
   });
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ 
-    message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err.message : {}
-  });
-});
-
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ message: 'Route not found' });
-});
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+//------------------------------------
+server.listen(5000, () => {
+  console.log("🚀 AgroLink Backend running on port 5000");
 });

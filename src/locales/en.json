@@ -91,6 +91,47 @@
     "messages": "Messages",
     "completeProfile": "Complete your profile to get better matches",
     "viewMatches": "View your potential matches",
-    "checkMessages": "Check your conversations"
-  }
+    "checkMessages": "Check your conversations",
+    "error": "Error occurred",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort"
+  },
+  "organicFarmers": {
+      "title": "Our Certified Organic Farmers",
+      "subtitle": "Connect directly with trusted organic farmers",
+      "viewProfile": "View Profile",
+      "certified": "Certified Organic",
+      "experience": "Years of Experience",
+      "location": "Location",
+      "crops": "Main Crops",
+      "rating": "Rating",
+      "contact": "Contact Farmer"
+    },
+    "footer": {
+      "description": "AgriMatch connects farmers directly with buyers, transporters, and storage providers. Empowering agricultural communities through technology.",
+      "quickLinks": "Quick Links",
+      "support": "Support",
+      "contact": "Contact Us",
+      "rights": "All rights reserved.",
+      "home": "Home",
+      "farmers": "Farmers",
+      "buyers": "Buyers",
+      "transport": "Transport",
+      "storage": "Storage",
+      "login": "Login",
+      "signup": "Sign Up",
+      "help": "Help Center",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "about": "About Us",
+      "blog": "Blog",
+      "faq": "FAQ"
+    }
 }
